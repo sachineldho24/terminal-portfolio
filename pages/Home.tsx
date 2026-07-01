@@ -699,29 +699,6 @@ const Home: React.FC = () => {
                      <p>
                         I work across the full stack using React, TypeScript, React Native, and Python (FastAPI/Supabase), integrating models from Gemini, Groq, and Ollama into real-world applications. By combining engineering rigor with design sensibilities, I build tools that look expensive and perform smoothly. I love collaborating with teams to take projects from zero to launch, ensuring fast delivery and robust performance. Let's build something exceptional together.
                      </p>
-                     
-                     <div className="pt-8 border-t border-slate-800 grid grid-cols-2 gap-8 text-sm">
-                        <div>
-                            <h4 className="text-green-500 mb-4 font-bold uppercase tracking-wider text-xs flex items-center gap-2">
-                                <Terminal className="w-3 h-3" /> Core Stack
-                            </h4>
-                            <ul className="space-y-2 text-slate-400 font-mono text-xs">
-                                <li className="hover:text-white transition-colors cursor-default">[ React / TypeScript ]</li>
-                                <li className="hover:text-white transition-colors cursor-default">[ React Native / Expo ]</li>
-                                <li className="hover:text-white transition-colors cursor-default">[ Python / Supabase ]</li>
-                            </ul>
-                        </div>
-                        <div>
-                            <h4 className="text-green-500 mb-4 font-bold uppercase tracking-wider text-xs flex items-center gap-2">
-                                <Cpu className="w-3 h-3" /> Tools
-                            </h4>
-                            <ul className="space-y-2 text-slate-400 font-mono text-xs">
-                                <li className="hover:text-white transition-colors cursor-default">[ LangChain / RAG ]</li>
-                                <li className="hover:text-white transition-colors cursor-default">[ Gemini / Groq / Ollama ]</li>
-                                <li className="hover:text-white transition-colors cursor-default">[ Git / Vite ]</li>
-                            </ul>
-                        </div>
-                     </div>
                 </div>
 
                 {/* Right Side - Animated "Video" Loop Placeholder */}
