@@ -685,25 +685,19 @@ const Home: React.FC = () => {
       <section id="about" ref={aboutRef} className="py-16 md:py-24 px-6 bg-[#050505] overflow-hidden">
          <div className="max-w-7xl mx-auto">
             <div className={`flex items-baseline gap-4 mb-16 transition-all duration-1000 ease-out transform ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-                 <h2 className="text-5xl font-black text-white tracking-tighter">S<span className="text-green-500">≡</span></h2>
-                 <span className="text-slate-500 text-lg uppercase tracking-widest">Sachin Eldho - AI & Full-Stack Developer</span>
+                 <h2 className="text-5xl font-black text-white tracking-tighter uppercase">
+                     ABOUT ME<span className="text-green-500 animate-pulse">_</span>
+                 </h2>
             </div>
 
             <div className="grid md:grid-cols-2 gap-12 lg:gap-24 items-start">
-                <div className={`space-y-8 text-slate-300 leading-relaxed text-lg font-light transition-all duration-1000 delay-200 ease-out transform ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+                <div className={`space-y-8 text-slate-300 leading-relaxed text-sm md:text-base font-light transition-all duration-1000 delay-200 ease-out transform ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
                      <p>
                         <span className="text-green-500 font-bold mr-2">{'>'}</span>
-                        Hello. I'm Sachin Eldho, an AI &amp; full-stack developer.
+                        Hello. I'm Sachin Eldho, a full-stack engineer specializing in bridging the gap between state-of-the-art AI capabilities and premium, production-ready frontends. I build software that puts AI to work — ranging from engineering Retrieval-Augmented Generation (RAG) pipelines to shipping a complete profit-analytics SaaS. I enjoy architecting systems from database models to responsive web and mobile user interfaces. My goal is always to deliver clean, highly optimized code that solves real business needs.
                      </p>
                      <p>
-                        I build products that put AI to work — from a Retrieval-Augmented Generation
-                        agent and a vision-powered calorie tracker to a restaurant profit-analytics SaaS.
-                        I enjoy shipping end-to-end, from data and models to polished interfaces.
-                     </p>
-                     <p>
-                        I work across the web and mobile stack — React, TypeScript, React Native/Expo,
-                        and Python — and I like integrating LLMs (Gemini, Groq, Ollama) into real,
-                        useful applications.
+                        I work across the full stack using React, TypeScript, React Native, and Python (FastAPI/Supabase), integrating models from Gemini, Groq, and Ollama into real-world applications. By combining engineering rigor with design sensibilities, I build tools that look expensive and perform smoothly. I love collaborating with teams to take projects from zero to launch, ensuring fast delivery and robust performance. Let's build something exceptional together.
                      </p>
                      
                      <div className="pt-8 border-t border-slate-800 grid grid-cols-2 gap-8 text-sm">
@@ -731,12 +725,12 @@ const Home: React.FC = () => {
                 </div>
 
                 {/* Right Side - Animated "Video" Loop Placeholder */}
-                <div className={`relative aspect-square md:aspect-[4/5] bg-[#0a0a0a] border border-slate-800 overflow-hidden group transition-all duration-1000 delay-400 ease-out transform ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+                <div className={`relative aspect-square bg-[#080808] border border-slate-800 overflow-hidden group transition-all duration-1000 delay-400 ease-out transform ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
                      {/* Static Image Base */}
                      <img 
                         src="/about-profile.png" 
                         alt="Profile visualization" 
-                        className="w-full h-full object-cover opacity-50 mix-blend-luminosity grayscale group-hover:grayscale-0 transition-all duration-700" 
+                        className="w-full h-full object-contain opacity-60 mix-blend-luminosity grayscale group-hover:grayscale-0 transition-all duration-700" 
                         loading="lazy"
                         decoding="async"
                      />
