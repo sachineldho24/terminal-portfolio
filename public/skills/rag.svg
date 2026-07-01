@@ -1,0 +1,8 @@
+<svg viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2">
+        <path d="M12 2v6M5 14v4M19 14v4M12 8a7 7 0 0 0-7 6M12 8a7 7 0 0 1 7 6" />
+        <circle cx="12" cy="5" r="2" fill="#22C55E"/>
+        <circle cx="5" cy="14" r="2" fill="#22C55E"/>
+        <circle cx="19" cy="14" r="2" fill="#22C55E"/>
+        <circle cx="5" cy="19" r="2" fill="#22C55E"/>
+        <circle cx="19" cy="19" r="2" fill="#22C55E"/>
+    </svg>

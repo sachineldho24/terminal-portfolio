@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- 3D Flat Cylinder database representation -->
+  <path d="M16 40v48c0 14 21.5 24 48 24s48-10 48-24V40c0 14-21.5 24-48 24S16 54 16 40z" fill="#E28405"/>
+  <ellipse cx="64" cy="40" rx="48" ry="20" fill="#F59E0B"/>
+  <path d="M16 64v24c0 14 21.5 24 48 24s48-10 48-24V64c0 14-21.5 24-48 24S16 78 16 64z" fill="#B45309" opacity="0.25"/>
+  
+  <!-- Inset shadow ring for cylinder section divisions -->
+  <path d="M16 64c0 14 21.5 24 48 24s48-10 48-24" stroke="#B45309" strokeWidth="3" fill="none" opacity="0.3"/>
+  <path d="M16 88c0 14 21.5 24 48 24s48-10 48-24" stroke="#B45309" strokeWidth="3" fill="none" opacity="0.3"/>
+
+  <!-- High contrast bold SQL text -->
+  <text x="64" y="84" fill="#FFFFFF" fontSize="26px" fontWeight="900" fontFamily="system-ui, -apple-system, sans-serif" textAnchor="middle" letterSpacing="0.5px">SQL</text>
+</svg>
