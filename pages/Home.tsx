@@ -734,7 +734,7 @@ const Home: React.FC = () => {
                 <div className={`relative aspect-square md:aspect-[4/5] bg-[#0a0a0a] border border-slate-800 overflow-hidden group transition-all duration-1000 delay-400 ease-out transform ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
                      {/* Static Image Base */}
                      <img 
-                        src="https://picsum.photos/seed/cyberpunk/800/1000?grayscale" 
+                        src="/about-profile.png" 
                         alt="Profile visualization" 
                         className="w-full h-full object-cover opacity-50 mix-blend-luminosity grayscale group-hover:grayscale-0 transition-all duration-700" 
                         loading="lazy"
