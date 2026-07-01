@@ -36,6 +36,8 @@ const PointillismHero: React.FC<PointillismPortraitProps> = ({ scrollProgress })
   const progressRef = useRef(0);
   const imageLoadedRef = useRef(false);
   const sampleWidthRef = useRef(350);
+  const layoutRef = useRef({ offsetX: 0, offsetY: 0, drawWidth: 0, drawHeight: 0 });
+  const isVisibleRef = useRef(true);
 
   // Keep progress ref in sync with prop
   useEffect(() => {
@@ -67,9 +69,10 @@ const PointillismHero: React.FC<PointillismPortraitProps> = ({ scrollProgress })
     const pixels = imageData.data;
     const particles: Particle[] = [];
 
-    // Step = 1: sample every single pixel at 1:1 ratio.
-    // This completely removes all sampling grids, moiré stripes, and aliasing.
-    const step = 1;
+    // Adaptive step to bound particle count within budget (e.g. 9000 particles)
+    const TARGET_PARTICLE_BUDGET = 9000;
+    const estimatedDensePixels = sampleWidth * sampleHeight;
+    const step = Math.max(1, Math.round(Math.sqrt(estimatedDensePixels / TARGET_PARTICLE_BUDGET)));
 
     for (let y = 0; y < sampleHeight; y += step) {
       for (let x = 0; x < sampleWidth; x += step) {
@@ -112,8 +115,8 @@ const PointillismHero: React.FC<PointillismPortraitProps> = ({ scrollProgress })
         // Opacity
         const dotOpacity = intensity * vignette;
 
-        // Base size ratio
-        const sizeRatio = 0.52;
+        // Base size ratio (adjusted slightly larger at higher step counts to retain dense visual feel)
+        const sizeRatio = step > 1 ? 0.65 : 0.52;
 
         // Capture original color
         const color = `rgb(${r}, ${g}, ${b})`;
@@ -170,10 +173,56 @@ const PointillismHero: React.FC<PointillismPortraitProps> = ({ scrollProgress })
     imageLoadedRef.current = true;
   }, []);
 
+  // Compute layout offsets only when needed, not on every frame
+  const updateLayout = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const w = canvas.width / dpr;
+    const h = canvas.height / dpr;
+
+    const imgAspect = 1.0;
+    let drawWidth = w * 0.38;
+    let drawHeight = drawWidth;
+    let offsetX = w * 0.55;
+    let offsetY = (h - drawHeight) / 2;
+
+    const placeholder = document.getElementById('portrait-placeholder');
+    if (placeholder) {
+      const pRect = placeholder.getBoundingClientRect();
+      const cRect = canvas.getBoundingClientRect();
+
+      const pWidth = pRect.width;
+      const pHeight = pRect.height;
+      offsetX = pRect.left - cRect.left;
+      offsetY = pRect.top - cRect.top;
+
+      // Fit aspect ratio within placeholder boundaries (contain)
+      if (pWidth / imgAspect <= pHeight) {
+        drawWidth = pWidth;
+        drawHeight = drawWidth / imgAspect;
+        offsetY += (pHeight - drawHeight) / 2;
+      } else {
+        drawHeight = pHeight;
+        drawWidth = drawHeight * imgAspect;
+        offsetX += (pWidth - drawWidth) / 2;
+      }
+    }
+
+    layoutRef.current = { offsetX, offsetY, drawWidth, drawHeight };
+  }, []);
+
   // Render loop
   const render = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+
+    if (!isVisibleRef.current) {
+      animFrameRef.current = requestAnimationFrame(render);
+      return; // skip drawing entirely when offscreen
+    }
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
@@ -213,34 +262,7 @@ const PointillismHero: React.FC<PointillismPortraitProps> = ({ scrollProgress })
     }
     ctx.globalAlpha = 1;
 
-    // Preserve stipple image aspect ratio (1.0) inside target box (contain fit)
-    const imgAspect = 1.0;
-    let drawWidth = w * 0.38;
-    let drawHeight = drawWidth;
-    let offsetX = w * 0.55;
-    let offsetY = (h - drawHeight) / 2;
-
-    const placeholder = document.getElementById('portrait-placeholder');
-    if (placeholder) {
-      const pRect = placeholder.getBoundingClientRect();
-      const cRect = canvas.getBoundingClientRect();
-
-      const pWidth = pRect.width;
-      const pHeight = pRect.height;
-      offsetX = pRect.left - cRect.left;
-      offsetY = pRect.top - cRect.top;
-
-      // Fit aspect ratio within placeholder boundaries (contain)
-      if (pWidth / imgAspect <= pHeight) {
-        drawWidth = pWidth;
-        drawHeight = drawWidth / imgAspect;
-        offsetY += (pHeight - drawHeight) / 2;
-      } else {
-        drawHeight = pHeight;
-        drawWidth = drawHeight * imgAspect;
-        offsetX += (pWidth - drawWidth) / 2;
-      }
-    }
+    const { offsetX, offsetY, drawWidth, drawHeight } = layoutRef.current;
 
     // Assembly normalization: completes fully at 55% of the total scroll range
     const assemblyProgress = Math.min(1, progress / 0.55);
@@ -331,16 +353,46 @@ const PointillismHero: React.FC<PointillismPortraitProps> = ({ scrollProgress })
     img.src = '/developer-face.png?t=' + Date.now();
     img.onload = () => {
       initParticles(img, dims.width, dims.height);
+      updateLayout();
     };
 
     animFrameRef.current = requestAnimationFrame(render);
-    window.addEventListener('resize', handleResize);
+
+    let resizeTicking = false;
+    const onResize = () => {
+      handleResize();
+      if (!resizeTicking) {
+        resizeTicking = true;
+        requestAnimationFrame(() => {
+          updateLayout();
+          resizeTicking = false;
+        });
+      }
+    };
+
+    // ResizeObserver on the placeholder catches layout shifts scroll/resize doesn't
+    const ro = new ResizeObserver(() => updateLayout());
+    const placeholder = document.getElementById('portrait-placeholder');
+    if (placeholder) ro.observe(placeholder);
+
+    window.addEventListener('resize', onResize);
+
+    const canvasEl = canvasRef.current;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        isVisibleRef.current = entry.isIntersecting;
+      },
+      { rootMargin: '200px 0px' }
+    );
+    if (canvasEl) io.observe(canvasEl);
 
     return () => {
       cancelAnimationFrame(animFrameRef.current);
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('resize', onResize);
+      ro.disconnect();
+      io.disconnect();
     };
-  }, [setupCanvas, initParticles, render, handleResize]);
+  }, [setupCanvas, initParticles, render, handleResize, updateLayout]);
 
   return (
     <canvas

@@ -93,6 +93,8 @@ const ProjectDetail: React.FC = () => {
                                 src={img} 
                                 alt={`Visual Data ${i}`} 
                                 className="w-full h-auto object-cover opacity-80 group-hover:opacity-100 transition-all duration-500"
+                                loading="lazy"
+                                decoding="async"
                             />
                             {/* Overlay Scanline */}
                             <div className="absolute top-0 left-0 w-full h-full bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.1)_50%)] bg-[length:100%_4px] pointer-events-none z-10"></div>

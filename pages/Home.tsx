@@ -30,35 +30,67 @@ const Home: React.FC = () => {
   const skillsWrapperRef = useRef<HTMLDivElement>(null);
   const [skillsScrollProgress, setSkillsScrollProgress] = useState(0);
 
+  // Track scroll progress for pointillism animation
+  const heroWrapperRef = useRef<HTMLDivElement>(null);
+  const [scrollProgress, setScrollProgress] = useState(0);
+
   useEffect(() => {
-    if (!isDesktop) return;
+    let ticking = false;
 
-    const handleScroll = () => {
-      const wrapper = skillsWrapperRef.current;
-      if (!wrapper) return;
+    const measure = () => {
+      ticking = false;
 
-      const rect = wrapper.getBoundingClientRect();
-      const viewportHeight = window.innerHeight;
-      const scrollRange = wrapper.offsetHeight - viewportHeight;
-      if (scrollRange <= 0) return;
+      const heroWrapper = heroWrapperRef.current;
+      if (heroWrapper) {
+        const rect = heroWrapper.getBoundingClientRect();
+        const scrollRange = heroWrapper.offsetHeight - window.innerHeight;
+        if (scrollRange > 0) {
+          const progress = Math.max(0, Math.min(1, -rect.top / scrollRange));
+          setScrollProgress(progress);
+        }
+      }
 
-      const scrolled = -rect.top;
-      const progress = Math.max(0, Math.min(1, scrolled / scrollRange));
-      setSkillsScrollProgress(progress);
+      if (isDesktop && skillsWrapperRef.current) {
+        const wrapper = skillsWrapperRef.current;
+        const rect = wrapper.getBoundingClientRect();
+        const scrollRange = wrapper.offsetHeight - window.innerHeight;
+        if (scrollRange > 0) {
+          const progress = Math.max(0, Math.min(1, -rect.top / scrollRange));
+          setSkillsScrollProgress(progress);
+        }
+      }
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
+    const onScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(measure);
+      }
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    measure();
+    return () => window.removeEventListener('scroll', onScroll);
   }, [isDesktop]);
 
   // Mouse tracking for the hover card
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
+    let ticking = false;
+    let last = { x: 0, y: 0 };
+
     const handleMouseMove = (e: MouseEvent) => {
-      setMousePos({ x: e.clientX, y: e.clientY });
+      last = { x: e.clientX, y: e.clientY };
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(() => {
+          setMousePos(last);
+          ticking = false;
+        });
+      }
     };
+
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
@@ -73,28 +105,6 @@ const Home: React.FC = () => {
     updateTime();
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
-  }, []);
-
-  // Track scroll progress for pointillism animation
-  const heroWrapperRef = useRef<HTMLDivElement>(null);
-  const [scrollProgress, setScrollProgress] = useState(0);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const wrapper = heroWrapperRef.current;
-      if (!wrapper) return;
-
-      const rect = wrapper.getBoundingClientRect();
-      const viewportHeight = window.innerHeight;
-      // Scroll range = total height minus one viewport (the sticky portion)
-      const scrollRange = wrapper.offsetHeight - viewportHeight;
-      const scrolled = -rect.top;
-      const progress = Math.max(0, Math.min(1, scrolled / scrollRange));
-      setScrollProgress(progress);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
   }, []);
 
   useEffect(() => {
@@ -727,6 +737,8 @@ const Home: React.FC = () => {
                         src="https://picsum.photos/seed/cyberpunk/800/1000?grayscale" 
                         alt="Profile visualization" 
                         className="w-full h-full object-cover opacity-50 mix-blend-luminosity grayscale group-hover:grayscale-0 transition-all duration-700" 
+                        loading="lazy"
+                        decoding="async"
                      />
                      
                      {/* Horizontal Scan Line */}
