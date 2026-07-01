@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { PROJECTS, SOCIAL_LINKS, CONTACT_EMAIL } from '../constants';
 import TypingText from '../components/TypingText';
 import ProjectListItem from '../components/ProjectListItem';
@@ -6,81 +6,13 @@ import PointillismHero from '../components/PointillismHero';
 import { Project } from '../types';
 import { MapPin, Mail, Send, Github, Linkedin, Twitter, Terminal, Cpu } from 'lucide-react';
 
-const ABOUT_PARAGRAPHS = [
-  "Hello. I'm Sachin Eldho, an AI Engineer & Full-Stack Developer bridging the gap between machine intelligence and production-grade software.",
-  "I specialize in putting AI to work—designing RAG agents, orchestrating multi-agent systems, and deploying custom LLM pipelines (Gemini, Groq, Claude) that solve real-world problems.",
-  "Whether building a vision-powered calorie tracker, a restaurant profit-analytics platform, or fine-tuning models, I ship complete end-to-end products with high performance and polished, responsive frontends.",
-  "I build across the full stack using React, TypeScript, React Native/Expo, and Python, ensuring model capabilities are matched by robust, scalable architectures."
-];
-
-interface StreamingParagraphsProps {
-  paragraphs: string[];
-  isActive: boolean;
-  onComplete: () => void;
-}
-
-const StreamingParagraphs: React.FC<StreamingParagraphsProps> = ({ paragraphs, isActive, onComplete }) => {
-  const [currentParagraphIdx, setCurrentParagraphIdx] = useState(0);
-  const [typedText, setTypedText] = useState<string[]>(paragraphs.map(() => ''));
-
-  useEffect(() => {
-    if (!isActive) return;
-    if (currentParagraphIdx >= paragraphs.length) {
-      onComplete();
-      return;
-    }
-
-    const textToType = paragraphs[currentParagraphIdx];
-    let currentIndex = 0;
-
-    const interval = setInterval(() => {
-      if (currentIndex < textToType.length) {
-        setTypedText(prev => {
-          const next = [...prev];
-          next[currentParagraphIdx] = textToType.slice(0, currentIndex + 1);
-          return next;
-        });
-        currentIndex++;
-      } else {
-        clearInterval(interval);
-        setCurrentParagraphIdx(prev => prev + 1);
-      }
-    }, 6); // Fast typing speed (6ms per character) for smooth reading
-
-    return () => clearInterval(interval);
-  }, [isActive, currentParagraphIdx, paragraphs, onComplete]);
-
-  return (
-    <div className="space-y-6 font-mono text-sm md:text-base leading-relaxed text-slate-300">
-      {paragraphs.map((para, idx) => {
-        // If not typed yet, render nothing
-        if (idx > currentParagraphIdx) return null;
-
-        const isCurrentlyTyping = idx === currentParagraphIdx;
-        const isHook = idx === 1;
-        
-        return (
-          <p key={idx} className={isHook ? "text-green-500 font-bold text-lg md:text-xl border-l-2 border-green-500 pl-4 my-4" : ""}>
-            {idx === 0 && <span className="text-green-500 font-bold mr-2">{'>'}</span>}
-            {typedText[idx]}
-            {isCurrentlyTyping && (
-              <span className="w-1.5 h-4 bg-green-500 inline-block align-middle ml-1 animate-pulse"></span>
-            )}
-          </p>
-        );
-      })}
-    </div>
-  );
-};
-
 const Home: React.FC = () => {
   const [hoveredProject, setHoveredProject] = useState<Project | null>(null);
   const [systemReady, setSystemReady] = useState(false);
   const [currentTime, setCurrentTime] = useState('');
   const projectsRef = useRef<HTMLDivElement>(null);
   const aboutRef = useRef<HTMLDivElement>(null);
-  const [aboutVisible, setAboutVisible] = useState(false);
-  const [paragraphsDone, setParagraphsDone] = useState(false);
+  const [aboutVisible, setAboutVisible] = useState(true);
 
   const [isDesktop, setIsDesktop] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -759,13 +691,22 @@ const Home: React.FC = () => {
 
             <div className="grid md:grid-cols-2 gap-12 lg:gap-24 items-start">
                 <div className={`space-y-8 text-slate-300 leading-relaxed text-lg font-light transition-all duration-1000 delay-200 ease-out transform ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-                     <StreamingParagraphs 
-                        paragraphs={ABOUT_PARAGRAPHS} 
-                        isActive={aboutVisible} 
-                        onComplete={() => setParagraphsDone(true)} 
-                     />
+                     <p>
+                        <span className="text-green-500 font-bold mr-2">{'>'}</span>
+                        Hello. I'm Sachin Eldho, an AI &amp; full-stack developer.
+                     </p>
+                     <p>
+                        I build products that put AI to work — from a Retrieval-Augmented Generation
+                        agent and a vision-powered calorie tracker to a restaurant profit-analytics SaaS.
+                        I enjoy shipping end-to-end, from data and models to polished interfaces.
+                     </p>
+                     <p>
+                        I work across the web and mobile stack — React, TypeScript, React Native/Expo,
+                        and Python — and I like integrating LLMs (Gemini, Groq, Ollama) into real,
+                        useful applications.
+                     </p>
                      
-                     <div className={`pt-8 border-t border-slate-800 grid grid-cols-2 gap-8 text-sm transition-all duration-1000 transform ${paragraphsDone ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+                     <div className="pt-8 border-t border-slate-800 grid grid-cols-2 gap-8 text-sm">
                         <div>
                             <h4 className="text-green-500 mb-4 font-bold uppercase tracking-wider text-xs flex items-center gap-2">
                                 <Terminal className="w-3 h-3" /> Core Stack
