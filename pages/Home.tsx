@@ -304,7 +304,7 @@ const Home: React.FC = () => {
                       <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-white tracking-tighter mb-1 relative z-10">
                           <span className="font-sans font-black tracking-tighter inline-flex items-baseline uppercase">
                               <span className="text-[#f1eae1] leading-none">A</span>
-                              <span className="text-[#f1eae1] leading-none inline-block origin-bottom transform skew-x-[-21deg] ml-[2px]">I</span>
+                              <span className="text-[#f1eae1] leading-none inline-block origin-bottom transform skew-x-[21deg] ml-[2px]">I</span>
                           </span>
                       </h1>
                       <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-emerald-500 to-green-500 tracking-tighter mb-4 sm:mb-8 glitch uppercase relative z-10" data-text="ENGINEER">
