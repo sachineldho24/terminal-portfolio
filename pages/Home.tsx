@@ -301,12 +301,16 @@ const Home: React.FC = () => {
               {/* LEFT: Text content (more compact, shifted upwards) */}
               <div className="w-full lg:w-[38%] flex-shrink-0 flex flex-col justify-center min-w-0 pt-0 lg:pt-2 lg:-mt-12">
                   <div className="mb-6 sm:mb-8">
-                      <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-white tracking-tighter mb-1 relative z-10">
-                          <span className="font-sans font-black tracking-tighter inline-flex items-baseline uppercase">
-                              <span className="text-[#f1eae1] leading-none">A</span>
-                              <span className="text-[#f1eae1] leading-none inline-block origin-bottom transform skew-x-[21deg] ml-[2px]">I</span>
-                          </span>
-                      </h1>
+                      <div className="h-[30px] sm:h-[48px] md:h-[60px] lg:h-[72px] xl:h-[96px] text-[#f1eae1] mb-1 relative z-10 flex items-center">
+                          <svg 
+                            viewBox="0 0 256 176" 
+                            className="h-[80%] w-auto"
+                            fill="currentColor"
+                          >
+                              <path d="M147.486878,0 C147.486878,0 217.568251,175.780074 217.568251,175.780074 C217.568251,175.780074 256,175.780074 256,175.780074 C256,175.780074 185.918621,0 185.918621,0 C185.918621,0 147.486878,0 147.486878,0 C147.486878,0 147.486878,0 147.486878,0 Z"></path>
+                              <path d="M66.1828124,106.221191 C66.1828124,106.221191 90.1624677,44.4471185 90.1624677,44.4471185 C90.1624677,44.4471185 114.142128,106.221191 114.142128,106.221191 C114.142128,106.221191 66.1828124,106.221191 66.1828124,106.221191 C66.1828124,106.221191 66.1828124,106.221191 66.1828124,106.221191 Z M70.0705318,0 C70.0705318,0 0,175.780074 0,175.780074 C0,175.780074 39.179211,175.780074 39.179211,175.780074 C39.179211,175.780074 53.5097704,138.86606 53.5097704,138.86606 C53.5097704,138.86606 126.817544,138.86606 126.817544,138.86606 C126.817544,138.86606 141.145724,175.780074 141.145724,175.780074 C141.145724,175.780074 180.324935,175.780074 180.324935,175.780074 C180.324935,175.780074 110.254409,0 110.254409,0 C110.254409,0 70.0705318,0 70.0705318,0 C70.0705318,0 70.0705318,0 70.0705318,0 Z"></path>
+                          </svg>
+                      </div>
                       <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-emerald-500 to-green-500 tracking-tighter mb-4 sm:mb-8 glitch uppercase relative z-10" data-text="ENGINEER">
                           <span className="relative inline-block">
                               ENGINEER
