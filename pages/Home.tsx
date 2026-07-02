@@ -10,6 +10,61 @@ const Home: React.FC = () => {
   const [hoveredProject, setHoveredProject] = useState<Project | null>(null);
   const [systemReady, setSystemReady] = useState(false);
   const [currentTime, setCurrentTime] = useState('');
+
+  // Contact Nano Form state
+  const [nanoForm, setNanoForm] = useState({ name: '', email: '', subject: '', message: '' });
+  const [nanoStatus, setNanoStatus] = useState('[ Read 26 lines ]');
+  const [nanoSending, setNanoSending] = useState(false);
+  const [nanoModified, setNanoModified] = useState(false);
+
+  const handleInputChange = (field: keyof typeof nanoForm) => (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setNanoForm(prev => ({ ...prev, [field]: e.target.value }));
+    setNanoModified(true);
+  };
+
+  const handleNanoSubmit = useCallback(async () => {
+    if (nanoSending) return;
+    if (!nanoForm.name.trim() || !nanoForm.email.trim() || !nanoForm.message.trim()) {
+      setNanoStatus('[ Error: Name, Email and Message are required! ]');
+      setTimeout(() => {
+        setNanoStatus(nanoModified ? '[ Modified ]' : '[ Read 26 lines ]');
+      }, 3000);
+      return;
+    }
+
+    setNanoSending(true);
+    setNanoStatus('[ Writing contact.txt ... ]');
+    
+    await new Promise((r) => setTimeout(r, 800));
+    setNanoStatus('[ Committing file change ... ]');
+    
+    await new Promise((r) => setTimeout(r, 800));
+    setNanoStatus('[ Transmitting SMTP payload ... ]');
+
+    await new Promise((r) => setTimeout(r, 1000));
+
+    setNanoStatus('[ Success: 200 OK. Message sent! ]');
+    setNanoForm({ name: '', email: '', subject: '', message: '' });
+    setNanoModified(false);
+    setNanoSending(false);
+
+    setTimeout(() => {
+      setNanoStatus('[ Read 26 lines ]');
+    }, 5000);
+  }, [nanoForm, nanoSending, nanoModified]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key.toLowerCase() === 'x') {
+        e.preventDefault();
+        handleNanoSubmit();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleNanoSubmit]);
   const projectsRef = useRef<HTMLDivElement>(null);
   const aboutRef = useRef<HTMLDivElement>(null);
   const aboutWrapperRef = useRef<HTMLDivElement>(null);
@@ -921,104 +976,179 @@ const Home: React.FC = () => {
             <h2 className="text-6xl md:text-8xl font-black text-white mb-2 tracking-tighter flex items-center gap-4">
                 CONTACT <span className="text-green-500 animate-pulse">{'>'}_</span>
             </h2>
-            <p className="text-slate-400 text-lg font-mono mb-16 uppercase tracking-wider pl-2 border-l-2 border-green-500/50">
-                Let's connect. Execute command: send message.
-            </p>
+            <div className="border border-green-500/20 bg-[#020202] rounded overflow-hidden shadow-[0_0_30px_rgba(34,197,94,0.05)] w-full mt-8">
+                {/* Nano Header Bar */}
+                <div className="bg-green-500 text-black font-mono text-xs px-4 py-1.5 flex justify-between font-bold select-none">
+                    <span>GNU nano 7.2</span>
+                    <span>contact.txt</span>
+                    <span>{nanoModified ? 'Modified' : ''}</span>
+                </div>
 
-            <div className="grid md:grid-cols-2 gap-20">
-                
-                {/* Form */}
-                <form className="space-y-8" onSubmit={(e) => e.preventDefault()}>
-                    <div className="space-y-6 font-mono">
-                        <div className="relative group">
-                            <label className="text-xs text-green-500 font-bold uppercase tracking-widest mb-2 block">Name:</label>
-                            <div className="relative flex items-center border border-slate-800 bg-[#080808] focus-within:border-green-500 transition-colors">
-                                <span className="pl-4 text-slate-600">|</span>
-                                <input 
-                                    type="text" 
-                                    className="w-full bg-transparent border-none p-4 text-slate-200 focus:ring-0 focus:outline-none placeholder-slate-700"
-                                    placeholder=""
-                                />
-                            </div>
-                        </div>
-                        
-                        <div className="relative group">
-                            <label className="text-xs text-green-500 font-bold uppercase tracking-widest mb-2 block">Email:</label>
-                             <div className="relative flex items-center border border-slate-800 bg-[#080808] focus-within:border-green-500 transition-colors">
-                                <span className="pl-4 text-slate-600">@</span>
-                                <input
-                                    type="email"
-                                    className="w-full bg-transparent border-none p-4 text-slate-200 focus:ring-0 focus:outline-none placeholder-slate-700"
-                                    placeholder="you@example.com"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="relative group">
-                            <label className="text-xs text-green-500 font-bold uppercase tracking-widest mb-2 block">Subject:</label>
-                            <div className="relative flex items-center border border-slate-800 bg-[#080808] focus-within:border-green-500 transition-colors">
-                                <span className="pl-4 text-slate-600 text-xs">Re:</span>
-                                <input 
-                                    type="text" 
-                                    className="w-full bg-transparent border-none p-4 text-slate-200 focus:ring-0 focus:outline-none placeholder-slate-700"
-                                    placeholder="Project_Inquiry"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="relative group">
-                            <label className="text-xs text-green-500 font-bold uppercase tracking-widest mb-2 block">Message:</label>
-                            <textarea 
-                                rows={5}
-                                className="w-full bg-[#080808] border border-slate-800 p-4 text-slate-200 focus:border-green-500 focus:ring-0 focus:outline-none transition-all placeholder-slate-700 resize-none"
-                            />
-                        </div>
+                {/* Nano Editor Container */}
+                <div className="flex bg-black font-mono text-xs sm:text-sm p-4 text-green-500/90 relative min-h-[520px] overflow-x-auto">
+                    {/* Line numbers (1 to 26) */}
+                    <div className="text-green-900/40 select-none pr-3 border-r border-green-950/20 text-right w-8 flex-shrink-0 flex flex-col gap-1.5">
+                        {Array.from({ length: 26 }, (_, i) => (
+                            <div key={i + 1} className="h-6 flex items-center justify-end">{i + 1}</div>
+                        ))}
                     </div>
 
-                    <button className="w-fit px-8 py-4 bg-green-500/10 border border-green-500 text-green-400 font-bold tracking-[0.2em] uppercase hover:bg-green-500 hover:text-black active:scale-[0.97] transition-all duration-300 flex items-center gap-4 group rounded-sm">
-                        SEND TRANSMISSION <span className="group-hover:translate-x-1 transition-transform">{'>'}</span>
-                    </button>
-                </form>
+                    {/* Workspace */}
+                    <div className="flex-1 pl-4 flex flex-col gap-1.5 min-w-[500px]">
+                        <div className="h-6 flex items-center text-green-900/60 select-none"># ====================================================</div>
+                        <div className="h-6 flex items-center text-green-400 font-bold select-none">#      LET'S BUILD SOMETHING INTELLIGENT TOGETHER</div>
+                        <div className="h-6 flex items-center text-green-900/60 select-none"># ====================================================</div>
+                        <div className="h-6" />
 
-                {/* Direct Channel Info */}
-                <div className="space-y-16 pt-8 font-mono">
-                    <div>
-                        <h3 className="text-xl text-green-500 font-bold mb-8 tracking-wider uppercase">DIRECT_CHANNEL:</h3>
-                        <div className="space-y-6 text-sm">
-                            <div className="flex flex-col gap-2">
-                                <span className="text-slate-500 uppercase text-xs tracking-widest">Email:</span>
-                                <a href={`mailto:${CONTACT_EMAIL}`} className="text-white hover:text-green-400 transition-colors border-b border-slate-800 pb-1 w-fit">
-                                    {CONTACT_EMAIL}
-                                </a>
-                            </div>
-                            <div className="flex flex-col gap-2">
-                                <span className="text-slate-500 uppercase text-xs tracking-widest">Status:</span>
-                                <span className="text-white flex items-center gap-2">
-                                    OPEN_TO_OPPORTUNITIES <GlobeIcon />
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div>
-                         <h3 className="text-xl text-green-500 font-bold mb-8 tracking-wider uppercase">SOCIAL_LINKS:</h3>
-                         <div className="flex flex-col gap-4">
-                            {SOCIAL_LINKS.map((link) => (
-                                <a 
-                                    key={link.platform} 
-                                    href={`https://${link.url}`} 
-                                    target="_blank" 
-                                    rel="noreferrer"
-                                    className="flex items-center gap-3 text-slate-400 hover:text-green-400 transition-colors group"
-                                >
-                                    <div className="text-green-500/50 group-hover:text-green-500 transition-colors">
-                                        {getIcon(link.icon)}
+                        <div className="grid md:grid-cols-2 gap-6 items-stretch">
+                            {/* Left Column: Info & Connect */}
+                            <div className="space-y-4">
+                                {/* Contact Info Panel */}
+                                <div className="border border-green-500/20 rounded p-4 space-y-3 bg-[#030303]/60 relative shadow-[inset_0_0_12px_rgba(0,255,0,0.02)]">
+                                    <div className="text-green-400 font-bold tracking-wide select-none">{'>'} CONTACT INFO</div>
+                                    <div className="space-y-2 text-xs sm:text-sm">
+                                        <div className="grid grid-cols-[75px_10px_1fr] gap-x-1">
+                                            <span className="text-green-500/60 font-semibold">Name</span>
+                                            <span className="text-green-500/30">:</span>
+                                            <span className="text-white">Sachin Eldho</span>
+                                        </div>
+                                        <div className="grid grid-cols-[75px_10px_1fr] gap-x-1">
+                                            <span className="text-green-500/60 font-semibold">Email</span>
+                                            <span className="text-green-500/30">:</span>
+                                            <a href={`mailto:${CONTACT_EMAIL}`} className="text-white hover:text-green-400 hover:underline transition-all break-all">{CONTACT_EMAIL}</a>
+                                        </div>
+                                        <div className="grid grid-cols-[75px_10px_1fr] gap-x-1">
+                                            <span className="text-green-500/60 font-semibold">Location</span>
+                                            <span className="text-green-500/30">:</span>
+                                            <span className="text-white">India</span>
+                                        </div>
+                                        <div className="grid grid-cols-[75px_10px_1fr] gap-x-1">
+                                            <span className="text-green-500/60 font-semibold">Status</span>
+                                            <span className="text-green-500/30">:</span>
+                                            <span className="text-white flex items-center gap-1">Open to opportunities <GlobeIcon /></span>
+                                        </div>
                                     </div>
-                                    <span className="text-sm">{link.url}</span>
-                                </a>
-                            ))}
-                         </div>
+                                </div>
+
+                                {/* Connect Panel */}
+                                <div className="border border-green-500/20 rounded p-4 space-y-2 bg-[#030303]/60 relative shadow-[inset_0_0_12px_rgba(0,255,0,0.02)]">
+                                    <div className="text-green-400 font-bold tracking-wide select-none">{'>'} CONNECT</div>
+                                    <div className="text-green-500/40 text-[10px] select-none">Let's connect on other platforms</div>
+                                    <div className="w-full h-[1px] bg-green-500/10 mb-2" />
+                                    <div className="space-y-2 text-xs sm:text-sm">
+                                        <div className="grid grid-cols-[75px_10px_1fr] gap-x-1">
+                                            <span className="text-green-500/60 font-semibold">GitHub</span>
+                                            <span className="text-green-500/30">:</span>
+                                            <a href="https://github.com/sachineldho24" target="_blank" rel="noreferrer" className="text-white hover:text-green-400 hover:underline transition-all">github.com/sachineldho24</a>
+                                        </div>
+                                        <div className="grid grid-cols-[75px_10px_1fr] gap-x-1">
+                                            <span className="text-green-500/60 font-semibold">LinkedIn</span>
+                                            <span className="text-green-500/30">:</span>
+                                            <a href="https://linkedin.com/in/sachin-eldho" target="_blank" rel="noreferrer" className="text-white hover:text-green-400 hover:underline transition-all">linkedin.com/in/sachin-eldho</a>
+                                        </div>
+                                        <div className="grid grid-cols-[75px_10px_1fr] gap-x-1">
+                                            <span className="text-green-500/60 font-semibold">X</span>
+                                            <span className="text-green-500/30">:</span>
+                                            <a href="https://x.com/sachin_eldho24" target="_blank" rel="noreferrer" className="text-white hover:text-green-400 hover:underline transition-all">x.com/sachin_eldho24</a>
+                                        </div>
+                                        <div className="grid grid-cols-[75px_10px_1fr] gap-x-1">
+                                            <span className="text-green-500/60 font-semibold">Instagram</span>
+                                            <span className="text-green-500/30">:</span>
+                                            <span className="text-slate-500 italic">will be provided later</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Right Column: Message Form */}
+                            <div className="border border-green-500/20 rounded p-4 bg-[#030303]/60 shadow-[inset_0_0_12px_rgba(0,255,0,0.02)] flex flex-col justify-between min-h-[350px]">
+                                <div className="space-y-4">
+                                    <div className="text-green-400 font-bold tracking-wide select-none">{'>'} SEND A MESSAGE</div>
+                                    
+                                    <div className="space-y-3 font-mono">
+                                        <div className="grid grid-cols-[70px_10px_1fr] gap-x-1 items-center">
+                                            <label className="text-green-500/70 font-semibold select-none text-xs sm:text-sm">Name</label>
+                                            <span className="text-green-500/30">:</span>
+                                            <input 
+                                              type="text" 
+                                              value={nanoForm.name} 
+                                              onChange={handleInputChange('name')}
+                                              className="bg-transparent border-none border-b border-green-950 text-white font-mono p-0 focus:ring-0 focus:outline-none focus:border-b-2 focus:border-green-500 w-full text-xs sm:text-sm"
+                                              placeholder="____________________________________"
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-[70px_10px_1fr] gap-x-1 items-center">
+                                            <label className="text-green-500/70 font-semibold select-none text-xs sm:text-sm">Email</label>
+                                            <span className="text-green-500/30">:</span>
+                                            <input 
+                                              type="email" 
+                                              value={nanoForm.email} 
+                                              onChange={handleInputChange('email')}
+                                              className="bg-transparent border-none border-b border-green-950 text-white font-mono p-0 focus:ring-0 focus:outline-none focus:border-b-2 focus:border-green-500 w-full text-xs sm:text-sm"
+                                              placeholder="____________________________________"
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-[70px_10px_1fr] gap-x-1 items-center">
+                                            <label className="text-green-500/70 font-semibold select-none text-xs sm:text-sm">Subject</label>
+                                            <span className="text-green-500/30">:</span>
+                                            <input 
+                                              type="text" 
+                                              value={nanoForm.subject} 
+                                              onChange={handleInputChange('subject')}
+                                              className="bg-transparent border-none border-b border-green-950 text-white font-mono p-0 focus:ring-0 focus:outline-none focus:border-b-2 focus:border-green-500 w-full text-xs sm:text-sm"
+                                              placeholder="____________________________________"
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-[70px_10px_1fr] gap-x-1 items-start">
+                                            <label className="text-green-500/70 font-semibold pt-1 select-none text-xs sm:text-sm">Message</label>
+                                            <span className="text-green-500/30 pt-1">:</span>
+                                            <textarea 
+                                              rows={4}
+                                              value={nanoForm.message} 
+                                              onChange={handleInputChange('message')}
+                                              className="bg-transparent border-none border-b border-green-950 text-white font-mono p-0 focus:ring-0 focus:outline-none focus:border-b-2 focus:border-green-500 w-full resize-none leading-relaxed text-xs sm:text-sm"
+                                              placeholder="____________________________________"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="pt-4 flex justify-center">
+                                    <button 
+                                      onClick={handleNanoSubmit}
+                                      disabled={nanoSending}
+                                      className="px-6 py-2 border border-green-500 text-green-400 font-bold font-mono tracking-wider hover:bg-green-500 hover:text-black transition-colors rounded-sm text-xs cursor-pointer select-none active:scale-[0.97] bg-[#050505]"
+                                    >
+                                        {nanoSending ? '[ SENDING... ]' : '[ Send Message ]'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="h-6" />
+                        <div className="h-6 flex items-center text-green-900/50 select-none"># ----------------------------------------------------</div>
+                        <div className="h-6 flex items-center text-green-500/80 italic select-none">"The best way to predict the future is to build it."</div>
+                        <div className="h-6 flex items-center text-green-900/50 select-none"># ----------------------------------------------------</div>
                     </div>
+                </div>
+
+                {/* Nano Bottom Status Line */}
+                <div className="bg-[#050505] border-t border-green-500/20 py-2 flex justify-center text-xs font-mono font-bold select-none">
+                    <span className="bg-green-500 text-black px-4 py-0.5">{nanoStatus}</span>
+                </div>
+
+                {/* Keyboard Shortcuts Toolbar */}
+                <div className="bg-black border-t border-green-950 py-3 px-4 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-y-1.5 gap-x-2 text-[10px] sm:text-xs font-mono text-green-500 select-none">
+                    <div><span className="bg-green-500/10 text-green-400 font-bold px-1 border border-green-500/20 mr-1.5">^G</span> Get Help</div>
+                    <div><span className="bg-green-500/10 text-green-400 font-bold px-1 border border-green-500/20 mr-1.5">^O</span> Write Out</div>
+                    <div><span className="bg-green-500/10 text-green-400 font-bold px-1 border border-green-500/20 mr-1.5">^R</span> Read File</div>
+                    <div><span className="bg-green-500/10 text-green-400 font-bold px-1 border border-green-500/20 mr-1.5">^Y</span> Prev Page</div>
+                    <div><span className="bg-green-500/10 text-green-400 font-bold px-1 border border-green-500/20 mr-1.5">^K</span> Cut Text</div>
+                    <div><span className="bg-green-500/10 text-green-400 font-bold px-1 border border-green-500/20 mr-1.5">^C</span> Cur Pos</div>
+                    <div onClick={handleNanoSubmit} className="cursor-pointer hover:text-green-300 transition-colors"><span className="bg-green-500/20 text-green-400 font-bold px-1 border border-green-500 mr-1.5">^X</span> Exit &amp; Send</div>
                 </div>
             </div>
         </div>
