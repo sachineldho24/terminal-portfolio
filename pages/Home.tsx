@@ -301,30 +301,29 @@ const Home: React.FC = () => {
               {/* LEFT: Text content (more compact, shifted upwards) */}
               <div className="w-full lg:w-[38%] flex-shrink-0 flex flex-col justify-center min-w-0 pt-0 lg:pt-2 lg:-mt-12">
                   <div className="mb-6 sm:mb-8">
-                      <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-white tracking-tighter mb-1 glitch uppercase relative z-10" data-text="AI &amp; FULL-">
-                          AI &amp; FULL-
+                      <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-white tracking-tighter mb-1 glitch uppercase relative z-10" data-text="AI">
+                          AI
                       </h1>
-                          <h1 className="text-4xl sm:text-5xl md:text-6xl xl:text-7xl font-extrabold tracking-tight text-white flex flex-col gap-2">
-                              <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-100 to-slate-400">AI</span>
-                              <span className="relative">
-                                  ENGINEER
-                                  <span 
-                                    className="absolute top-1/2 left-0 w-full h-[6px] md:h-[8px] bg-green-500/80 shadow-[0_0_12px_#22c55e] animate-glow"
-                                    style={{ transform: 'translateY(-50%)' }}
-                                  />
-                              </span>
-                          </h1>
+                      <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-emerald-500 to-green-500 tracking-tighter mb-4 sm:mb-8 glitch uppercase relative z-10" data-text="ENGINEER">
+                          <span className="relative inline-block">
+                              ENGINEER
+                              <span 
+                                className="absolute left-0 right-0 h-[4px] sm:h-[5px] md:h-[6px] bg-green-500 top-[52%] -translate-y-1/2 shadow-[0_0_15px_#22c55e,0_0_5px_#22c55e] pointer-events-none z-20" 
+                                style={{ transform: 'translateY(-50%)' }}
+                              />
+                          </span>
+                      </h1>
 
-                          <div className="space-y-3 pt-2">
-                              <p className="text-slate-300 text-sm sm:text-base md:text-lg lg:text-xl max-w-xl font-mono">
-                                  building autonomous agents in production.
-                              </p>
-                              <p className="text-green-500/60 text-xs sm:text-sm font-mono flex items-center gap-2">
-                                  <span className="text-green-500">$</span>
-                                  <span>git commit -m "taught the machine to reason"</span>
-                                  <span className="w-1.5 h-4 bg-green-500/80 animate-pulse inline-block"></span>
-                              </p>
-                          </div>
+                      <div className="space-y-3 pt-2">
+                          <p className="text-slate-300 text-sm sm:text-base md:text-lg lg:text-xl max-w-xl font-mono">
+                              building autonomous agents in production.
+                          </p>
+                          <p className="text-green-500/60 text-xs sm:text-sm font-mono flex items-center gap-2">
+                              <span className="text-green-500">$</span>
+                              <span>git commit -m "taught the machine to reason"</span>
+                              <span className="w-1.5 h-4 bg-green-500/80 animate-pulse inline-block"></span>
+                          </p>
+                      </div>
                   </div>
 
                   {/* Explore file shell link mimicking mobile mockup */}
