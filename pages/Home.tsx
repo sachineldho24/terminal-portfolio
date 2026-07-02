@@ -407,8 +407,8 @@ const Home: React.FC = () => {
 
       {/* --- HERO SECTION WITH POINTILLISM PORTRAIT --- */}
       {/* This tall wrapper provides the scroll distance that drives the animation */}
-      <div id="home" ref={heroWrapperRef} style={{ height: '250vh' }}>
-        <section className="sticky top-0 min-h-[100dvh] lg:h-[100dvh] flex flex-col px-4 sm:px-6 relative overflow-hidden">
+      <div id="home" ref={heroWrapperRef} style={{ height: isScreenshotMode ? 'auto' : '250vh' }}>
+        <section className={`${isScreenshotMode ? 'relative min-h-[100vh]' : 'sticky top-0 min-h-[100dvh] lg:h-[100dvh]'} flex flex-col px-4 sm:px-6 relative overflow-hidden`}>
           
           {/* Background full-viewport canvas for pointillism portrait */}
           <PointillismHero scrollProgress={scrollProgress} />
@@ -491,7 +491,7 @@ const Home: React.FC = () => {
       <div 
         id="skills"
         ref={isDesktop && !isScreenshotMode ? skillsWrapperRef : null} 
-        className={isDesktop && !isScreenshotMode ? "relative h-[350vh] bg-[#050505]" : "relative bg-[#050505] py-16 md:py-24"}
+        className={isDesktop && !isScreenshotMode ? "relative h-[220vh] bg-[#050505]" : "relative bg-[#050505] py-16 md:py-24"}
       >
         <section 
           className={isDesktop && !isScreenshotMode 
@@ -889,7 +889,7 @@ const Home: React.FC = () => {
         id="about" 
         ref={isScreenshotMode ? null : aboutWrapperRef} 
         className="relative bg-[#050505]"
-        style={{ height: isScreenshotMode ? 'auto' : '300vh' }}
+        style={{ height: isScreenshotMode ? 'auto' : '180vh' }}
       >
         <section 
           ref={aboutRef}
