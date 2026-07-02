@@ -305,26 +305,28 @@ const Home: React.FC = () => {
     : 1 - Math.pow(-2 * imageRevealProgress + 2, 3) / 2;
 
   // Render a single hacker-decoded line
-  const HackerLine = useCallback(({ text, lineIndex, totalLines, prefix }: { text: string; lineIndex: number; totalLines: number; prefix?: React.ReactNode }) => {
+  const HackerLine = useCallback(({ text, lineIndex, totalLines }: { text: string; lineIndex: number; totalLines: number }) => {
     const visible = isLineVisible(lineIndex, totalLines);
     if (!visible) return null; // don't render anything until line's scroll zone starts
     const decoded = decryptLine(text, lineIndex, totalLines);
     const allResolved = decoded.every(d => d.resolved);
 
     return (
-      <div className="font-mono text-sm md:text-base leading-relaxed mb-4">
-        {prefix}
-        {decoded.map((d, i) => {
-          if (d.char === '') return null;
-          if (d.resolved) {
-            return <span key={i} className="text-slate-300">{d.char}</span>;
-          }
-          if (d.active) {
-            return <span key={i} className="text-green-400 font-bold" style={{ textShadow: '0 0 8px #22c55e' }}>{d.char}</span>;
-          }
-          return <span key={i} className="text-green-500/40">{d.char}</span>;
-        })}
-        {!allResolved && <span className="inline-block w-2 h-4 bg-green-500 align-middle ml-0.5 animate-pulse shadow-[0_0_8px_#22c55e]" />}
+      <div className="font-mono text-sm md:text-base leading-relaxed mb-4 flex items-start">
+        <div className="flex-shrink-0 select-none mr-2.5 text-green-500 font-bold">{'>'}</div>
+        <div className="flex-1">
+          {decoded.map((d, i) => {
+            if (d.char === '') return null;
+            if (d.resolved) {
+              return <span key={i} className="text-slate-300">{d.char}</span>;
+            }
+            if (d.active) {
+              return <span key={i} className="text-green-400 font-bold" style={{ textShadow: '0 0 8px #22c55e' }}>{d.char}</span>;
+            }
+            return <span key={i} className="text-green-500/40">{d.char}</span>;
+          })}
+          {!allResolved && <span className="inline-block w-2 h-4 bg-green-500 align-middle ml-0.5 animate-pulse shadow-[0_0_8px_#22c55e]" />}
+        </div>
       </div>
     );
   }, [decryptLine, isLineVisible]);
@@ -928,43 +930,37 @@ const Home: React.FC = () => {
                   text={`Hello. I'm Sachin Eldho, a full-stack engineer specializing in bridging AI capabilities and premium, production-ready frontends.`}
                   lineIndex={1}
                   totalLines={8}
-                  prefix={<span className="text-green-500 font-bold mr-1">{'> '}</span>}
                 />
                 <HackerLine 
                   text="I build software that puts AI to work — from RAG pipelines to shipping a complete profit-analytics SaaS."
                   lineIndex={2}
                   totalLines={8}
-                  prefix={<span className="text-green-500 font-bold mr-1">{'> '}</span>}
                 />
                 <HackerLine 
                   text="I architect systems from database models to responsive web and mobile UIs. Clean, optimized code is the goal."
                   lineIndex={3}
                   totalLines={8}
-                  prefix={<span className="text-green-500 font-bold mr-1">{'> '}</span>}
                 />
                 <HackerLine 
                   text="Stack: React, TypeScript, React Native, Python, FastAPI, Supabase, Gemini, Groq, Ollama."
                   lineIndex={4}
                   totalLines={8}
-                  prefix={<span className="text-green-500 font-bold mr-1">{'> '}</span>}
                 />
                 <HackerLine 
                   text="Engineering rigor + design sensibility = tools that look expensive and perform smoothly."
                   lineIndex={5}
                   totalLines={8}
-                  prefix={<span className="text-green-500 font-bold mr-1">{'> '}</span>}
                 />
                 <HackerLine 
                   text="Let's build something exceptional together."
                   lineIndex={6}
                   totalLines={8}
-                  prefix={<span className="text-green-500 font-bold mr-1">{'> '}</span>}
                 />
               </div>
-
-              {/* Right Side — Target Locked Image (smaller, compact) */}
+ 
+              {/* Right Side — Target Locked Image (enlarged to align bottom) */}
               <div 
-                className="relative w-full max-w-[320px] lg:max-w-[340px] aspect-square flex-shrink-0 mx-auto lg:mx-0 overflow-hidden"
+                className="relative w-full max-w-[320px] lg:max-w-[420px] aspect-square flex-shrink-0 mx-auto lg:mx-0 overflow-hidden"
                 style={{
                   opacity: imageEased,
                   transform: `scale(${0.88 + imageEased * 0.12}) translate3d(0, ${(1 - imageEased) * 20}px, 0)`,
