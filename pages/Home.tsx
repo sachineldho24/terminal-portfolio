@@ -13,7 +13,7 @@ const Home: React.FC = () => {
 
   // Contact Nano Form state
   const [nanoForm, setNanoForm] = useState({ name: '', email: '', subject: '', message: '' });
-  const [nanoStatus, setNanoStatus] = useState('[ Read 26 lines ]');
+  const [nanoStatus, setNanoStatus] = useState('[ Read 22 lines ]');
   const [nanoSending, setNanoSending] = useState(false);
   const [nanoModified, setNanoModified] = useState(false);
 
@@ -49,7 +49,7 @@ const Home: React.FC = () => {
     if (!nanoForm.name.trim() || !nanoForm.email.trim() || !nanoForm.message.trim()) {
       setNanoStatus('[ Error: Name, Email and Message are required! ]');
       setTimeout(() => {
-        setNanoStatus(nanoModified ? '[ Modified ]' : '[ Read 26 lines ]');
+        setNanoStatus(nanoModified ? '[ Modified ]' : '[ Read 22 lines ]');
       }, 3000);
       return;
     }
@@ -71,9 +71,43 @@ const Home: React.FC = () => {
     setNanoSending(false);
 
     setTimeout(() => {
-      setNanoStatus('[ Read 26 lines ]');
+      setNanoStatus('[ Read 22 lines ]');
     }, 5000);
   }, [nanoForm, nanoSending, nanoModified]);
+
+  const handleShortcutClick = useCallback((cmd: string) => {
+    if (nanoSending) return;
+    switch (cmd) {
+      case 'help':
+        setNanoStatus('[ Help: Edit fields directly, type Ctrl+X or click ^X to transmit message. ]');
+        setTimeout(() => setNanoStatus(nanoModified ? '[ Modified ]' : '[ Read 22 lines ]'), 5000);
+        break;
+      case 'write':
+        handleNanoSubmit();
+        break;
+      case 'read':
+        setNanoForm({ name: '', email: '', subject: '', message: '' });
+        setNanoModified(false);
+        setNanoStatus('[ Reset template: contact.txt ]');
+        setTimeout(() => setNanoStatus('[ Read 22 lines ]'), 3000);
+        break;
+      case 'page':
+        setNanoStatus('[ Page 1 of 1 (contact.txt) ]');
+        setTimeout(() => setNanoStatus(nanoModified ? '[ Modified ]' : '[ Read 22 lines ]'), 3000);
+        break;
+      case 'cut':
+        setNanoForm(prev => ({ ...prev, message: '' }));
+        setNanoStatus('[ Cut message text buffer ]');
+        setTimeout(() => setNanoStatus(nanoModified ? '[ Modified ]' : '[ Read 22 lines ]'), 3000);
+        break;
+      case 'pos':
+        setNanoStatus('[ Line 12, Column 32, Character 248 ]');
+        setTimeout(() => setNanoStatus(nanoModified ? '[ Modified ]' : '[ Read 22 lines ]'), 3000);
+        break;
+      default:
+        break;
+    }
+  }, [handleNanoSubmit, nanoSending, nanoModified]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -991,20 +1025,20 @@ const Home: React.FC = () => {
       </div>
 
       {/* --- CONTACT SECTION --- */}
-      <section id="contact" ref={contactRef} className="py-16 md:py-24 px-6 bg-[#050505]">
-        <div className="max-w-6xl mx-auto">
-            <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tighter mb-3 uppercase flex items-center gap-4 animate-glow">
-                CONTACT <span className="text-green-500 animate-pulse">{'>'}_</span>
+      <section id="contact" ref={contactRef} className="py-16 md:py-24 px-6 bg-[#050505] overflow-hidden">
+        <div className={`max-w-6xl mx-auto transition-all duration-1000 ease-out transform ${
+            contactVisible 
+              ? 'opacity-100 translate-y-0 scale-100' 
+              : 'opacity-0 translate-y-12 scale-98 pointer-events-none'
+        }`}>
+            <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tighter mb-3 uppercase font-mono">
+                CONTACT
             </h2>
             <p className="text-slate-400 text-base sm:text-lg font-mono mb-6 uppercase tracking-wider pl-2 border-l-2 border-green-500/50 select-none">
                 Let's connect. Execute command: send message.
             </p>
 
-            <div className={`border border-green-500/20 bg-[#020202] rounded overflow-hidden shadow-[0_0_30px_rgba(34,197,94,0.05)] w-full transition-all duration-1000 ease-out transform ${
-                contactVisible 
-                  ? 'opacity-100 translate-y-0 scale-100' 
-                  : 'opacity-0 translate-y-12 scale-98 pointer-events-none'
-            }`}>
+            <div className="border border-green-500/20 bg-[#020202] rounded overflow-hidden shadow-[0_0_30px_rgba(34,197,94,0.05)] w-full">
                 {/* Nano Header Bar */}
                 <div className="bg-green-500 text-black font-mono text-xs px-4 py-1.5 flex justify-between font-bold select-none">
                     <span>GNU nano 7.2</span>
@@ -1013,10 +1047,10 @@ const Home: React.FC = () => {
                 </div>
 
                 {/* Nano Editor Container */}
-                <div className="flex bg-black font-mono text-xs sm:text-sm p-4 text-green-500/90 relative min-h-[520px] w-full">
-                    {/* Line numbers (1 to 26) - hidden on small screens for mobile responsiveness */}
+                <div className="flex bg-black font-mono text-xs sm:text-sm p-4 text-green-500/90 relative min-h-[440px] w-full">
+                    {/* Line numbers (1 to 22) - hidden on small screens for mobile responsiveness */}
                     <div className="hidden sm:flex text-green-900/40 select-none pr-3 border-r border-green-950/20 text-right w-8 flex-shrink-0 flex-col gap-1.5">
-                        {Array.from({ length: 26 }, (_, i) => (
+                        {Array.from({ length: 22 }, (_, i) => (
                             <div key={i + 1} className="h-6 flex items-center justify-end">{i + 1}</div>
                         ))}
                     </div>
@@ -1088,7 +1122,7 @@ const Home: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Right Column: Message Form */}
+                            {/* Message Form */}
                             <div className="border border-green-500/20 rounded p-4 bg-[#030303]/60 shadow-[inset_0_0_12px_rgba(0,255,0,0.02)] flex flex-col justify-between min-h-[350px] min-w-0">
                                 <div className="space-y-4">
                                     <div className="text-green-400 font-bold tracking-wide select-none">{'>'} SEND A MESSAGE</div>
@@ -1155,11 +1189,6 @@ const Home: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-
-                        <div className="h-6" />
-                        <div className="h-6 flex items-center text-green-900/50 select-none overflow-hidden whitespace-nowrap"># ----------------------------------------------------</div>
-                        <div className="h-6 flex items-center text-green-500/80 italic select-none overflow-hidden whitespace-nowrap">"The best way to predict the future is to build it."</div>
-                        <div className="h-6 flex items-center text-green-900/50 select-none overflow-hidden whitespace-nowrap"># ----------------------------------------------------</div>
                     </div>
                 </div>
 
@@ -1170,12 +1199,12 @@ const Home: React.FC = () => {
 
                 {/* Keyboard Shortcuts Toolbar */}
                 <div className="bg-black border-t border-green-950 py-3 px-4 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-y-1.5 gap-x-2 text-[10px] sm:text-xs font-mono text-green-500 select-none">
-                    <div><span className="bg-green-500/10 text-green-400 font-bold px-1 border border-green-500/20 mr-1.5">^G</span> Get Help</div>
-                    <div><span className="bg-green-500/10 text-green-400 font-bold px-1 border border-green-500/20 mr-1.5">^O</span> Write Out</div>
-                    <div><span className="bg-green-500/10 text-green-400 font-bold px-1 border border-green-500/20 mr-1.5">^R</span> Read File</div>
-                    <div><span className="bg-green-500/10 text-green-400 font-bold px-1 border border-green-500/20 mr-1.5">^Y</span> Prev Page</div>
-                    <div><span className="bg-green-500/10 text-green-400 font-bold px-1 border border-green-500/20 mr-1.5">^K</span> Cut Text</div>
-                    <div><span className="bg-green-500/10 text-green-400 font-bold px-1 border border-green-500/20 mr-1.5">^C</span> Cur Pos</div>
+                    <div onClick={() => handleShortcutClick('help')} className="cursor-pointer hover:text-green-300 transition-colors"><span className="bg-green-500/10 text-green-400 font-bold px-1 border border-green-500/20 mr-1.5">^G</span> Get Help</div>
+                    <div onClick={() => handleShortcutClick('write')} className="cursor-pointer hover:text-green-300 transition-colors"><span className="bg-green-500/10 text-green-400 font-bold px-1 border border-green-500/20 mr-1.5">^O</span> Write Out</div>
+                    <div onClick={() => handleShortcutClick('read')} className="cursor-pointer hover:text-green-300 transition-colors"><span className="bg-green-500/10 text-green-400 font-bold px-1 border border-green-500/20 mr-1.5">^R</span> Read File</div>
+                    <div onClick={() => handleShortcutClick('page')} className="cursor-pointer hover:text-green-300 transition-colors"><span className="bg-green-500/10 text-green-400 font-bold px-1 border border-green-500/20 mr-1.5">^Y</span> Prev Page</div>
+                    <div onClick={() => handleShortcutClick('cut')} className="cursor-pointer hover:text-green-300 transition-colors"><span className="bg-green-500/10 text-green-400 font-bold px-1 border border-green-500/20 mr-1.5">^K</span> Cut Text</div>
+                    <div onClick={() => handleShortcutClick('pos')} className="cursor-pointer hover:text-green-300 transition-colors"><span className="bg-green-500/10 text-green-400 font-bold px-1 border border-green-500/20 mr-1.5">^C</span> Cur Pos</div>
                     <div onClick={handleNanoSubmit} className="cursor-pointer hover:text-green-300 transition-colors"><span className="bg-green-500/20 text-green-400 font-bold px-1 border border-green-500 mr-1.5">^X</span> Exit &amp; Send</div>
                 </div>
             </div>
