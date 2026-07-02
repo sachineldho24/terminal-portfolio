@@ -16,9 +16,11 @@ interface Particle {
   y: number;
   sx: number;
   sy: number;
-  sizeRatio: number; // Size ratio relative to sample grid spacing
+  sizeRatio: number;
   opacity: number;
-  color: string; // Original RGB color from the source image
+  r: number;
+  g: number;
+  b: number;
   delay: number;
   vx: number;
   vy: number;
@@ -28,8 +30,122 @@ interface PointillismPortraitProps {
   scrollProgress: number;
 }
 
+const VS_SOURCE = `
+  attribute vec2 a_texCoord;
+  attribute vec2 a_scatterPos;
+  attribute float a_delay;
+  attribute float a_sizeRatio;
+  attribute float a_opacity;
+  attribute vec3 a_color;
+  attribute vec2 a_velocity;
+
+  uniform float u_scrollProgress;
+  uniform float u_time;
+  uniform vec2 u_resolution;
+  uniform vec4 u_layout; // offsetX, offsetY, drawWidth, drawHeight
+  uniform float u_sampleWidth;
+
+  varying vec4 v_color;
+  varying float v_pointSize;
+
+  float easeInOutCubic(float t) {
+    if (t < 0.5) {
+      return 4.0 * t * t * t;
+    } else {
+      float val = -2.0 * t + 2.0;
+      return 1.0 - (val * val * val) / 2.0;
+    }
+  }
+
+  void main() {
+    float assemblyProgress = min(1.0, u_scrollProgress / 0.55);
+    float particleProgress = clamp((assemblyProgress - a_delay) / (1.0 - a_delay), 0.0, 1.0);
+    float easedProgress = easeInOutCubic(particleProgress);
+
+    float tx = u_layout.x + a_texCoord.x * u_layout.z;
+    float ty = u_layout.y + a_texCoord.y * u_layout.w;
+
+    float x = a_scatterPos.x + (tx - a_scatterPos.x) * easedProgress;
+    float y = a_scatterPos.y + (ty - a_scatterPos.y) * easedProgress;
+
+    if (easedProgress < 1.0) {
+      // Scale floating distance to match the layout scale (maintaining same visual float size across screens)
+      float scaleFactor = u_layout.z / u_sampleWidth;
+      float floatAmount = (1.0 - easedProgress) * 3.0 * scaleFactor;
+      x += sin(u_time * a_velocity.x * 0.7 + a_delay * 100.0) * floatAmount;
+      y += cos(u_time * a_velocity.y * 0.7 + a_delay * 100.0) * floatAmount;
+    }
+
+    vec2 clipSpace = (vec2(x, y) / u_resolution) * 2.0 - 1.0;
+    gl_Position = vec4(clipSpace.x, -clipSpace.y, 0.0, 1.0);
+
+    float scaleFactor = u_layout.z / u_sampleWidth;
+    float baseDotSize = a_sizeRatio * scaleFactor;
+    float currentSize = baseDotSize * (1.0 + (1.0 - easedProgress) * 0.4);
+    
+    gl_PointSize = max(1.0, currentSize * 2.0);
+    v_pointSize = gl_PointSize;
+
+    float scatteredOpacity = 0.1;
+    float currentOpacity = scatteredOpacity + (a_opacity - scatteredOpacity) * easedProgress;
+    // Premultiply alpha for bright, correct blending on dark background
+    v_color = vec4(a_color * currentOpacity, currentOpacity);
+  }
+`;
+
+const FS_SOURCE = `
+  precision mediump float;
+  varying vec4 v_color;
+  varying float v_pointSize;
+
+  void main() {
+    float dist = distance(gl_PointCoord, vec2(0.5));
+    // Use smoothstep to create a soft, anti-aliased edge (1.5 physical pixels wide)
+    // This removes WebGL aliasing/snapping artifacts and mimics subpixel rendering
+    float delta = 1.5 / v_pointSize;
+    float alpha = smoothstep(0.5, 0.5 - delta, dist);
+    if (alpha <= 0.0) {
+      discard;
+    }
+    gl_FragColor = vec4(v_color.rgb, v_color.a * alpha);
+  }
+`;
+
+function createShader(gl: WebGLRenderingContext, type: number, source: string) {
+  const shader = gl.createShader(type);
+  if (!shader) return null;
+  gl.shaderSource(shader, source);
+  gl.compileShader(shader);
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    console.error('Shader compile error:', gl.getShaderInfoLog(shader));
+    gl.deleteShader(shader);
+    return null;
+  }
+  return shader;
+}
+
+function createProgram(gl: WebGLRenderingContext, vsSource: string, fsSource: string) {
+  const vs = createShader(gl, gl.VERTEX_SHADER, vsSource);
+  const fs = createShader(gl, gl.FRAGMENT_SHADER, fsSource);
+  if (!vs || !fs) return null;
+
+  const program = gl.createProgram();
+  if (!program) return null;
+  gl.attachShader(program, vs);
+  gl.attachShader(program, fs);
+  gl.linkProgram(program);
+
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    console.error('Program link error:', gl.getProgramInfoLog(program));
+    gl.deleteProgram(program);
+    return null;
+  }
+  return program;
+}
+
 const PointillismHero: React.FC<PointillismPortraitProps> = ({ scrollProgress }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const starCanvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
   const starsRef = useRef<Star[]>([]);
   const animFrameRef = useRef<number>(0);
@@ -39,14 +155,15 @@ const PointillismHero: React.FC<PointillismPortraitProps> = ({ scrollProgress })
   const layoutRef = useRef({ offsetX: 0, offsetY: 0, drawWidth: 0, drawHeight: 0 });
   const isVisibleRef = useRef(true);
 
+  // WebGL Refs
+  const glRef = useRef<WebGLRenderingContext | null>(null);
+  const programRef = useRef<WebGLProgram | null>(null);
+  const bufferRef = useRef<WebGLBuffer | null>(null);
+
   // Keep progress ref in sync with prop
   useEffect(() => {
     progressRef.current = scrollProgress;
   }, [scrollProgress]);
-
-  const easeInOutCubic = (t: number): number => {
-    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-  };
 
   // Sample the image and create particles
   const initParticles = useCallback((img: HTMLImageElement, canvasWidth: number, canvasHeight: number) => {
@@ -56,7 +173,6 @@ const PointillismHero: React.FC<PointillismPortraitProps> = ({ scrollProgress })
 
     const imgAspect = img.width / img.height;
 
-    // Higher sample resolution for better detail
     const sampleWidth = Math.min(img.width, 500);
     const sampleHeight = Math.round(sampleWidth / imgAspect);
     sampleWidthRef.current = sampleWidth;
@@ -69,13 +185,10 @@ const PointillismHero: React.FC<PointillismPortraitProps> = ({ scrollProgress })
     const pixels = imageData.data;
     const particles: Particle[] = [];
 
-    // Sample every single pixel (step = 1) for 100% maximum visual clarity of facial details.
-    // Thanks to layout caching and offscreen loop optimizations, this runs at a locked, smooth 60 FPS.
     const step = 1;
 
     for (let y = 0; y < sampleHeight; y += step) {
       for (let x = 0; x < sampleWidth; x += step) {
-        // Very subtle jitter just to break hard pixel edges
         const jitterX = (Math.random() - 0.5) * 0.4;
         const jitterY = (Math.random() - 0.5) * 0.4;
         const jx = Math.max(0, Math.min(sampleWidth - 1, Math.round(x + jitterX)));
@@ -83,19 +196,16 @@ const PointillismHero: React.FC<PointillismPortraitProps> = ({ scrollProgress })
 
         const i = (jy * sampleWidth + jx) * 4;
         const r = pixels[i];
-        const g = pixels[i + 1]; // Green channel
+        const g = pixels[i + 1];
         const b = pixels[i + 2];
         const a = pixels[i + 3];
 
         if (a < 30) continue;
 
-        // Boost intensity for rich, bright green colors
         const intensity = Math.min(1.0, (g / 255) * 1.55);
 
-        // Skip background
         if (intensity < 0.12) continue;
 
-        // Vignette mask to fade outermost pixels smoothly
         const imgCenterX = sampleWidth * 0.5;
         const imgCenterY = sampleHeight * 0.5;
         const dx = x - imgCenterX;
@@ -107,22 +217,15 @@ const PointillismHero: React.FC<PointillismPortraitProps> = ({ scrollProgress })
 
         if (vignette <= 0) continue;
 
-        // Clean normalized coordinate
-        const ntx = x / sampleWidth;
-        const nty = y / sampleHeight;
-
-        // Opacity
+        // Add subtle sub-pixel jitter to target coordinates to break perfect pixel alignment grids
+        const ntx = (x + (Math.random() - 0.5) * 1.2) / sampleWidth;
+        const nty = (y + (Math.random() - 0.5) * 1.2) / sampleHeight;
         const dotOpacity = intensity * vignette;
-
-        // Base size ratio (adjusted slightly larger at higher step counts to retain dense visual feel)
         const sizeRatio = step > 1 ? 0.65 : 0.52;
 
-        // Capture original color
-        const color = `rgb(${r}, ${g}, ${b})`;
-
-        // Scatter position
-        const sx = Math.random() * canvasWidth * 1.4 - canvasWidth * 0.2;
-        const sy = Math.random() * canvasHeight * 1.4 - canvasHeight * 0.2;
+        const dpr = window.devicePixelRatio || 1;
+        const sx = (Math.random() * canvasWidth * 1.4 - canvasWidth * 0.2) * dpr;
+        const sy = (Math.random() * canvasHeight * 1.4 - canvasHeight * 0.2) * dpr;
 
         particles.push({
           ntx, nty,
@@ -130,7 +233,7 @@ const PointillismHero: React.FC<PointillismPortraitProps> = ({ scrollProgress })
           sx, sy,
           sizeRatio,
           opacity: dotOpacity,
-          color,
+          r, g, b,
           delay: Math.random() * 0.35,
           vx: (Math.random() - 0.5) * 1.5,
           vy: (Math.random() - 0.5) * 1.5,
@@ -151,18 +254,42 @@ const PointillismHero: React.FC<PointillismPortraitProps> = ({ scrollProgress })
 
     particlesRef.current = particles;
 
-    // Initialize background floating stars (space dust) - denser & more visible to match Reference.png
+    // Compile WebGL buffer data
+    const gl = glRef.current;
+    if (gl) {
+      const data = new Float32Array(particles.length * 12);
+      for (let idx = 0; idx < particles.length; idx++) {
+        const p = particles[idx];
+        const offset = idx * 12;
+        data[offset + 0] = p.ntx;
+        data[offset + 1] = p.nty;
+        data[offset + 2] = p.sx;
+        data[offset + 3] = p.sy;
+        data[offset + 4] = p.delay;
+        data[offset + 5] = p.sizeRatio;
+        data[offset + 6] = p.opacity;
+        data[offset + 7] = p.r / 255;
+        data[offset + 8] = p.g / 255;
+        data[offset + 9] = p.b / 255;
+        data[offset + 10] = p.vx;
+        data[offset + 11] = p.vy;
+      }
+
+      if (!bufferRef.current) {
+        bufferRef.current = gl.createBuffer();
+      }
+      gl.bindBuffer(gl.ARRAY_BUFFER, bufferRef.current);
+      gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+    }
+
     const stars: Star[] = [];
-    const numStars = 450; // Increased count
+    const numStars = 450;
     for (let i = 0; i < numStars; i++) {
       stars.push({
         x: Math.random() * canvasWidth,
         y: Math.random() * canvasHeight,
-        // Larger size range (up to 2.2px) for visible dust
         size: 0.4 + Math.random() * 1.8,
-        // Brighter opacity range (up to 0.42)
         opacity: 0.05 + Math.random() * 0.37,
-        // Slightly faster floating movement
         vx: (Math.random() - 0.5) * 0.22,
         vy: (Math.random() - 0.5) * 0.22,
       });
@@ -172,7 +299,27 @@ const PointillismHero: React.FC<PointillismPortraitProps> = ({ scrollProgress })
     imageLoadedRef.current = true;
   }, []);
 
-  // Compute layout offsets only when needed, not on every frame
+  // Set up WebGL Context
+  const setupWebGL = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const gl = canvas.getContext('webgl', { alpha: true, antialias: true, premultipliedAlpha: true });
+    if (!gl) {
+      console.error('WebGL not supported');
+      return;
+    }
+    glRef.current = gl;
+
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); // Premultiplied alpha blending
+
+    const program = createProgram(gl, VS_SOURCE, FS_SOURCE);
+    if (!program) return;
+    programRef.current = program;
+  }, []);
+
+  // Compute layout offsets only when needed
   const updateLayout = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -197,7 +344,6 @@ const PointillismHero: React.FC<PointillismPortraitProps> = ({ scrollProgress })
       offsetX = pRect.left - cRect.left;
       offsetY = pRect.top - cRect.top;
 
-      // Fit aspect ratio within placeholder boundaries (contain)
       if (pWidth / imgAspect <= pHeight) {
         drawWidth = pWidth;
         drawHeight = drawWidth / imgAspect;
@@ -212,114 +358,11 @@ const PointillismHero: React.FC<PointillismPortraitProps> = ({ scrollProgress })
     layoutRef.current = { offsetX, offsetY, drawWidth, drawHeight };
   }, []);
 
-  // Render loop
-  const render = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    if (!isVisibleRef.current) {
-      animFrameRef.current = requestAnimationFrame(render);
-      return; // skip drawing entirely when offscreen
-    }
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const particles = particlesRef.current;
-    const stars = starsRef.current;
-    const progress = progressRef.current;
-    const dpr = window.devicePixelRatio || 1;
-    const w = canvas.width / dpr;
-    const h = canvas.height / dpr;
-
-    ctx.clearRect(0, 0, w, h);
-
-    if (!imageLoadedRef.current || particles.length === 0) {
-      animFrameRef.current = requestAnimationFrame(render);
-      return;
-    }
-
-    const time = Date.now() * 0.001;
-
-    // Draw background floating stars
-    for (let i = 0; i < stars.length; i++) {
-      const s = stars[i];
-      s.x += s.vx;
-      s.y += s.vy;
-
-      // Wrap around edges
-      if (s.x < 0) s.x = w;
-      if (s.x > w) s.x = 0;
-      if (s.y < 0) s.y = h;
-      if (s.y > h) s.y = 0;
-
-      ctx.beginPath();
-      ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
-      ctx.fillStyle = '#22c55e'; // Green space dust
-      ctx.globalAlpha = s.opacity;
-      ctx.fill();
-    }
-    ctx.globalAlpha = 1;
-
-    const { offsetX, offsetY, drawWidth, drawHeight } = layoutRef.current;
-
-    // Assembly normalization: completes fully at 55% of the total scroll range
-    const assemblyProgress = Math.min(1, progress / 0.55);
-    const scaleFactor = drawWidth / sampleWidthRef.current;
-
-    // Draw particles
-    for (let i = 0; i < particles.length; i++) {
-      const p = particles[i];
-
-      const particleProgress = Math.max(0, Math.min(1, (assemblyProgress - p.delay) / (1 - p.delay)));
-      const easedProgress = easeInOutCubic(particleProgress);
-
-      // Compute dynamic target coordinate on this frame
-      const tx = offsetX + p.ntx * drawWidth;
-      const ty = offsetY + p.nty * drawHeight;
-
-      // Interpolate from scattered to dynamic target
-      p.x = p.sx + (tx - p.sx) * easedProgress;
-      p.y = p.sy + (ty - p.sy) * easedProgress;
-
-      // Gentle floating when scattered
-      if (easedProgress < 1) {
-        const floatAmount = (1 - easedProgress) * 3;
-        p.x += Math.sin(time * p.vx * 0.7 + i * 0.01) * floatAmount;
-        p.y += Math.cos(time * p.vy * 0.7 + i * 0.01) * floatAmount;
-      }
-
-      // Fade-in opacity
-      const scatteredOpacity = 0.1;
-      const assembledOpacity = p.opacity;
-      const currentOpacity = scatteredOpacity + (assembledOpacity - scatteredOpacity) * easedProgress;
-
-      // Render size
-      const baseDotSize = p.sizeRatio * scaleFactor;
-      const currentSize = baseDotSize * (1 + (1 - easedProgress) * 0.4);
-
-      ctx.fillStyle = p.color;
-      ctx.globalAlpha = currentOpacity;
-
-      // Pixel-perfect rectangle drawing for small sizes bypasses circular subpixel anti-aliasing blur
-      if (currentSize <= 1.4) {
-        ctx.fillRect(p.x - currentSize, p.y - currentSize, currentSize * 2, currentSize * 2);
-      } else {
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, currentSize, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
-    ctx.globalAlpha = 1;
-
-    animFrameRef.current = requestAnimationFrame(render);
-  }, []);
-
-  // Size the canvas to match parent viewport
+  // Size the canvases to match parent viewport
   const setupCanvas = useCallback(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    const starCanvas = starCanvasRef.current;
+    if (!canvas || !starCanvas) return;
 
     const dpr = window.devicePixelRatio || 1;
     const parent = canvas.parentElement;
@@ -331,25 +374,146 @@ const PointillismHero: React.FC<PointillismPortraitProps> = ({ scrollProgress })
     canvas.style.width = `${rect.width}px`;
     canvas.style.height = `${rect.height}px`;
 
-    const ctx = canvas.getContext('2d');
-    if (ctx) ctx.scale(dpr, dpr);
+    starCanvas.width = rect.width * dpr;
+    starCanvas.height = rect.height * dpr;
+    starCanvas.style.width = `${rect.width}px`;
+    starCanvas.style.height = `${rect.height}px`;
+
+    const starCtx = starCanvas.getContext('2d');
+    if (starCtx) {
+      starCtx.resetTransform();
+      starCtx.scale(dpr, dpr);
+    }
+
+    const gl = glRef.current;
+    if (gl) {
+      gl.viewport(0, 0, canvas.width, canvas.height);
+    }
 
     return { width: rect.width, height: rect.height };
   }, []);
 
-  // Handle resize
+  // Render loop
+  const render = useCallback(() => {
+    const canvas = canvasRef.current;
+    const starCanvas = starCanvasRef.current;
+    if (!canvas || !starCanvas) return;
+
+    if (!isVisibleRef.current) {
+      animFrameRef.current = requestAnimationFrame(render);
+      return;
+    }
+
+    const starCtx = starCanvas.getContext('2d');
+    const gl = glRef.current;
+    const program = programRef.current;
+    const buffer = bufferRef.current;
+
+    if (!starCtx || !gl || !program || !buffer) {
+      animFrameRef.current = requestAnimationFrame(render);
+      return;
+    }
+
+    const particles = particlesRef.current;
+    const stars = starsRef.current;
+    const progress = progressRef.current;
+    const dpr = window.devicePixelRatio || 1;
+    const w = canvas.width / dpr;
+    const h = canvas.height / dpr;
+
+    // 1. Draw floating stars on 2D canvas
+    starCtx.clearRect(0, 0, w, h);
+    for (let i = 0; i < stars.length; i++) {
+      const s = stars[i];
+      s.x += s.vx;
+      s.y += s.vy;
+      if (s.x < 0) s.x = w;
+      if (s.x > w) s.x = 0;
+      if (s.y < 0) s.y = h;
+      if (s.y > h) s.y = 0;
+
+      starCtx.beginPath();
+      starCtx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+      starCtx.fillStyle = '#22c55e';
+      starCtx.globalAlpha = s.opacity;
+      starCtx.fill();
+    }
+    starCtx.globalAlpha = 1;
+
+    // 2. Draw portrait using WebGL program
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    if (!imageLoadedRef.current || particles.length === 0) {
+      animFrameRef.current = requestAnimationFrame(render);
+      return;
+    }
+
+    gl.useProgram(program);
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+
+    const stride = 12 * 4;
+
+    const locTexCoord = gl.getAttribLocation(program, 'a_texCoord');
+    gl.enableVertexAttribArray(locTexCoord);
+    gl.vertexAttribPointer(locTexCoord, 2, gl.FLOAT, false, stride, 0);
+
+    const locScatterPos = gl.getAttribLocation(program, 'a_scatterPos');
+    gl.enableVertexAttribArray(locScatterPos);
+    gl.vertexAttribPointer(locScatterPos, 2, gl.FLOAT, false, stride, 2 * 4);
+
+    const locDelay = gl.getAttribLocation(program, 'a_delay');
+    gl.enableVertexAttribArray(locDelay);
+    gl.vertexAttribPointer(locDelay, 1, gl.FLOAT, false, stride, 4 * 4);
+
+    const locSizeRatio = gl.getAttribLocation(program, 'a_sizeRatio');
+    gl.enableVertexAttribArray(locSizeRatio);
+    gl.vertexAttribPointer(locSizeRatio, 1, gl.FLOAT, false, stride, 5 * 4);
+
+    const locOpacity = gl.getAttribLocation(program, 'a_opacity');
+    gl.enableVertexAttribArray(locOpacity);
+    gl.vertexAttribPointer(locOpacity, 1, gl.FLOAT, false, stride, 6 * 4);
+
+    const locColor = gl.getAttribLocation(program, 'a_color');
+    gl.enableVertexAttribArray(locColor);
+    gl.vertexAttribPointer(locColor, 3, gl.FLOAT, false, stride, 7 * 4);
+
+    const locVelocity = gl.getAttribLocation(program, 'a_velocity');
+    gl.enableVertexAttribArray(locVelocity);
+    gl.vertexAttribPointer(locVelocity, 2, gl.FLOAT, false, stride, 10 * 4);
+
+    const time = Date.now() * 0.001;
+    const { offsetX, offsetY, drawWidth, drawHeight } = layoutRef.current;
+
+    gl.uniform1f(gl.getUniformLocation(program, 'u_scrollProgress'), progress);
+    gl.uniform1f(gl.getUniformLocation(program, 'u_time'), time);
+    gl.uniform2f(gl.getUniformLocation(program, 'u_resolution'), canvas.width, canvas.height);
+    gl.uniform4f(
+      gl.getUniformLocation(program, 'u_layout'),
+      offsetX * dpr,
+      offsetY * dpr,
+      drawWidth * dpr,
+      drawHeight * dpr
+    );
+    gl.uniform1f(gl.getUniformLocation(program, 'u_sampleWidth'), sampleWidthRef.current);
+
+    gl.drawArrays(gl.POINTS, 0, particles.length);
+
+    animFrameRef.current = requestAnimationFrame(render);
+  }, []);
+
   const handleResize = useCallback(() => {
     setupCanvas();
   }, [setupCanvas]);
 
-  // Init
   useEffect(() => {
+    setupWebGL();
     const dims = setupCanvas();
     if (!dims) return;
 
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    img.src = '/developer-face.png?t=' + Date.now();
+    img.src = '/developer-face.png';
     img.onload = () => {
       initParticles(img, dims.width, dims.height);
       updateLayout();
@@ -369,7 +533,6 @@ const PointillismHero: React.FC<PointillismPortraitProps> = ({ scrollProgress })
       }
     };
 
-    // ResizeObserver on the placeholder catches layout shifts scroll/resize doesn't
     const ro = new ResizeObserver(() => updateLayout());
     const placeholder = document.getElementById('portrait-placeholder');
     if (placeholder) ro.observe(placeholder);
@@ -390,15 +553,26 @@ const PointillismHero: React.FC<PointillismPortraitProps> = ({ scrollProgress })
       window.removeEventListener('resize', onResize);
       ro.disconnect();
       io.disconnect();
+      const gl = glRef.current;
+      if (gl && bufferRef.current) {
+        gl.deleteBuffer(bufferRef.current);
+      }
     };
-  }, [setupCanvas, initParticles, render, handleResize, updateLayout]);
+  }, [setupWebGL, setupCanvas, initParticles, render, handleResize, updateLayout]);
 
   return (
-    <canvas
-      ref={canvasRef}
-      className="absolute inset-0 w-full h-full pointer-events-none"
-      style={{ background: 'transparent', zIndex: 5 }}
-    />
+    <>
+      <canvas
+        ref={starCanvasRef}
+        className="absolute inset-0 w-full h-full pointer-events-none"
+        style={{ background: 'transparent', zIndex: 4 }}
+      />
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 w-full h-full pointer-events-none"
+        style={{ background: 'transparent', zIndex: 5 }}
+      />
+    </>
   );
 };
 
