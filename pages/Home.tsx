@@ -704,43 +704,36 @@ const Home: React.FC = () => {
                               <span>{'>'}</span> 5. DATABASES & VECTOR DB
                           </h3>
                           <div className="flex-1 flex items-center justify-center">
-                              <div className="flex flex-col gap-y-4 w-full items-center">
-                                  {/* Row 1: Relational, Document & BaaS Databases */}
-                                  <div className="grid grid-cols-4 gap-x-4 w-full justify-items-center">
-                                      {/* PostgreSQL */}
-                                      <div className="flex flex-col items-center gap-2 group cursor-pointer">
-                                          <img src="/SVG_ICONS/devicon--postgresql.svg" className="w-10 h-10 sm:w-12 sm:h-12 transition-transform duration-500 cubic-bezier(0.175, 0.885, 0.32, 1.275) group-hover:scale-125" alt="PostgreSQL" />
-                                          <span className="text-[10px] sm:text-xs md:text-[13px] text-slate-400 group-hover:text-white transition-colors duration-200">PostgreSQL</span>
-                                      </div>
-                                      {/* MySQL */}
-                                      <div className="flex flex-col items-center gap-2 group cursor-pointer">
-                                          <img src="/SVG_ICONS/logos--mysql.svg" className="w-10 h-10 sm:w-12 sm:h-12 transition-transform duration-500 cubic-bezier(0.175, 0.885, 0.32, 1.275) group-hover:scale-125" alt="MySQL" />
-                                          <span className="text-[10px] sm:text-xs md:text-[13px] text-slate-400 group-hover:text-white transition-colors duration-200">MySQL</span>
-                                      </div>
-                                      {/* MongoDB */}
-                                      <div className="flex flex-col items-center gap-2 group cursor-pointer">
-                                          <img src="/SVG_ICONS/devicon--mongodb.svg" className="w-10 h-10 sm:w-12 sm:h-12 transition-transform duration-500 cubic-bezier(0.175, 0.885, 0.32, 1.275) group-hover:scale-125" alt="MongoDB" />
-                                          <span className="text-[10px] sm:text-xs md:text-[13px] text-slate-400 group-hover:text-white transition-colors duration-200">MongoDB</span>
-                                      </div>
-                                      {/* Supabase */}
-                                      <div className="flex flex-col items-center gap-2 group cursor-pointer">
-                                          <img src="/SVG_ICONS/devicon--supabase.svg" className="w-10 h-10 sm:w-12 sm:h-12 transition-transform duration-500 cubic-bezier(0.175, 0.885, 0.32, 1.275) group-hover:scale-125" alt="Supabase" />
-                                          <span className="text-[10px] sm:text-xs md:text-[13px] text-slate-400 group-hover:text-white transition-colors duration-200">Supabase</span>
-                                      </div>
+                              <div className="grid grid-cols-3 gap-y-4 gap-x-2 w-full justify-items-center mt-1">
+                                  {/* PostgreSQL */}
+                                  <div className="flex flex-col items-center gap-2 group cursor-pointer">
+                                      <img src="/SVG_ICONS/devicon--postgresql.svg" className="w-10 h-10 sm:w-12 sm:h-12 transition-transform duration-500 cubic-bezier(0.175, 0.885, 0.32, 1.275) group-hover:scale-125" alt="PostgreSQL" />
+                                      <span className="text-[10px] sm:text-xs md:text-[13px] text-slate-400 group-hover:text-white transition-colors duration-200">PostgreSQL</span>
                                   </div>
-                                  
-                                  {/* Row 2: Vector Databases */}
-                                  <div className="flex justify-center gap-x-12 w-full">
-                                      {/* Qdrant */}
-                                      <div className="flex flex-col items-center gap-2 group cursor-pointer w-[70px] sm:w-[80px]">
-                                          <img src="/SVG_ICONS/logos--qdrant-icon.svg" className="w-10 h-10 sm:w-12 sm:h-12 transition-transform duration-500 cubic-bezier(0.175, 0.885, 0.32, 1.275) group-hover:scale-125" alt="Qdrant" />
-                                          <span className="text-[10px] sm:text-xs md:text-[13px] text-slate-400 group-hover:text-white transition-colors duration-200">Qdrant</span>
-                                      </div>
-                                      {/* Chroma */}
-                                      <div className="flex flex-col items-center gap-2 group cursor-pointer w-[70px] sm:w-[80px]">
-                                          <img src="/SVG_ICONS/logos--chroma.svg" className="w-10 h-10 sm:w-12 sm:h-12 transition-transform duration-500 cubic-bezier(0.175, 0.885, 0.32, 1.275) group-hover:scale-125" alt="Chroma" />
-                                          <span className="text-[10px] sm:text-xs md:text-[13px] text-slate-400 group-hover:text-white transition-colors duration-200">Chroma</span>
-                                      </div>
+                                  {/* MySQL */}
+                                  <div className="flex flex-col items-center gap-2 group cursor-pointer">
+                                      <img src="/SVG_ICONS/logos--mysql.svg" className="w-10 h-10 sm:w-12 sm:h-12 transition-transform duration-500 cubic-bezier(0.175, 0.885, 0.32, 1.275) group-hover:scale-125" alt="MySQL" />
+                                      <span className="text-[10px] sm:text-xs md:text-[13px] text-slate-400 group-hover:text-white transition-colors duration-200">MySQL</span>
+                                  </div>
+                                  {/* MongoDB */}
+                                  <div className="flex flex-col items-center gap-2 group cursor-pointer">
+                                      <img src="/SVG_ICONS/devicon--mongodb.svg" className="w-10 h-10 sm:w-12 sm:h-12 transition-transform duration-500 cubic-bezier(0.175, 0.885, 0.32, 1.275) group-hover:scale-125" alt="MongoDB" />
+                                      <span className="text-[10px] sm:text-xs md:text-[13px] text-slate-400 group-hover:text-white transition-colors duration-200">MongoDB</span>
+                                  </div>
+                                  {/* Supabase */}
+                                  <div className="flex flex-col items-center gap-2 group cursor-pointer">
+                                      <img src="/SVG_ICONS/devicon--supabase.svg" className="w-10 h-10 sm:w-12 sm:h-12 transition-transform duration-500 cubic-bezier(0.175, 0.885, 0.32, 1.275) group-hover:scale-125" alt="Supabase" />
+                                      <span className="text-[10px] sm:text-xs md:text-[13px] text-slate-400 group-hover:text-white transition-colors duration-200">Supabase</span>
+                                  </div>
+                                  {/* Qdrant */}
+                                  <div className="flex flex-col items-center gap-2 group cursor-pointer">
+                                      <img src="/SVG_ICONS/logos--qdrant-icon.svg" className="w-10 h-10 sm:w-12 sm:h-12 transition-transform duration-500 cubic-bezier(0.175, 0.885, 0.32, 1.275) group-hover:scale-125" alt="Qdrant" />
+                                      <span className="text-[10px] sm:text-xs md:text-[13px] text-slate-400 group-hover:text-white transition-colors duration-200">Qdrant</span>
+                                  </div>
+                                  {/* Chroma */}
+                                  <div className="flex flex-col items-center gap-2 group cursor-pointer">
+                                      <img src="/SVG_ICONS/logos--chroma.svg" className="w-10 h-10 sm:w-12 sm:h-12 transition-transform duration-500 cubic-bezier(0.175, 0.885, 0.32, 1.275) group-hover:scale-125" alt="Chroma" />
+                                      <span className="text-[10px] sm:text-xs md:text-[13px] text-slate-400 group-hover:text-white transition-colors duration-200">Chroma</span>
                                   </div>
                               </div>
                           </div>
@@ -804,8 +797,9 @@ const Home: React.FC = () => {
       </div>
 
       {/* --- PROJECTS SECTION --- */}
-      <section id="projects" className="pt-16 md:pt-20 pb-10 md:pb-14 px-6 relative bg-[#050505]" ref={projectsRef}>
-        <div className="max-w-7xl mx-auto">
+      <section id="projects" className="pt-16 md:pt-20 pb-10 md:pb-14 relative bg-[#050505]" ref={projectsRef}>
+        <div className="max-w-[1400px] mx-auto w-full px-6 sm:px-10 lg:px-16 font-mono">
+            <div className="lg:pl-12">
             {/* Title */}
             <div className="mb-10">
                 <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tighter mb-3 uppercase">
@@ -881,6 +875,7 @@ const Home: React.FC = () => {
                      </div>
                 )}
             </div>
+            </div>
         </div>
       </section>
 
@@ -895,10 +890,10 @@ const Home: React.FC = () => {
           ref={aboutRef}
           className={`${isScreenshotMode ? 'relative h-auto py-16 md:py-24' : 'sticky top-0 h-[100dvh]'} flex flex-col justify-center px-6 overflow-hidden pt-20`}
         >
-          <div className="max-w-7xl mx-auto w-full">
+          <div className="max-w-[1400px] mx-auto w-full px-6 sm:px-10 lg:px-16">
             {/* Top bar — terminal-style */}
             <div 
-              className="flex items-center gap-2 text-xs font-mono text-slate-500 mb-6"
+              className="flex items-center gap-2 text-xs font-mono text-slate-500 mb-6 lg:pl-12"
               style={{ opacity: aboutScrollProgress > 0 ? 1 : 0 }}
             >
               <span className="text-green-500">{'>'}</span>
@@ -909,7 +904,7 @@ const Home: React.FC = () => {
 
             <div className="flex flex-col lg:flex-row gap-10 lg:gap-16 items-start">
               {/* Left Column: Hacker text streaming */}
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 lg:pl-12">
                 {/* Title — decrypts as the heading itself */}
                 {isLineVisible(0, 8) && (() => {
                   const decoded = decryptLine('ABOUT ME', 0, 8);
@@ -1045,20 +1040,21 @@ const Home: React.FC = () => {
       </div>
 
       {/* --- CONTACT SECTION --- */}
-      <section id="contact" ref={contactRef} className="py-16 md:py-24 px-6 bg-[#050505] overflow-hidden">
-        <div className={`max-w-6xl mx-auto transition-all duration-1000 ease-out transform ${
+      <section id="contact" ref={contactRef} className="py-16 md:py-24 bg-[#050505] overflow-hidden">
+        <div className={`max-w-[1400px] mx-auto w-full px-6 sm:px-10 lg:px-16 transition-all duration-1000 ease-out transform ${
             contactVisible 
               ? 'opacity-100 translate-y-0 scale-100' 
               : 'opacity-0 translate-y-12 scale-98 pointer-events-none'
         }`}>
-            <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tighter mb-3 uppercase font-mono">
-                CONTACT
-            </h2>
-            <p className="text-slate-400 text-base sm:text-lg font-mono mb-6 uppercase tracking-wider pl-2 border-l-2 border-green-500/50 select-none">
-                Let's connect. Execute command: send message.
-            </p>
+            <div className="lg:pl-12">
+                <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tighter mb-3 uppercase font-mono">
+                    CONTACT
+                </h2>
+                <p className="text-slate-400 text-base sm:text-lg font-mono mb-6 uppercase tracking-wider pl-2 border-l-2 border-green-500/50 select-none">
+                    Let's connect. Execute command: send message.
+                </p>
 
-            <div className="border border-green-500/20 bg-[#020202] rounded overflow-hidden shadow-[0_0_30px_rgba(34,197,94,0.05)] w-full">
+                <div className="border border-green-500/20 bg-[#020202] rounded overflow-hidden shadow-[0_0_30px_rgba(34,197,94,0.05)] w-full">
                 {/* Nano Header Bar */}
                 <div className="bg-green-500 text-black font-mono text-xs px-4 py-1.5 flex justify-between font-bold select-none">
                     <span>GNU nano 7.2</span>
@@ -1227,6 +1223,7 @@ const Home: React.FC = () => {
                     <div onClick={() => handleShortcutClick('pos')} className="cursor-pointer hover:text-green-300 transition-colors"><span className="bg-green-500/10 text-green-400 font-bold px-1 border border-green-500/20 mr-1.5">^C</span> Cur Pos</div>
                     <div onClick={handleNanoSubmit} className="cursor-pointer hover:text-green-300 transition-colors"><span className="bg-green-500/20 text-green-400 font-bold px-1 border border-green-500 mr-1.5">^X</span> Exit &amp; Send</div>
                 </div>
+            </div>
             </div>
         </div>
       </section>
