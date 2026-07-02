@@ -425,10 +425,10 @@ const Home: React.FC = () => {
           </div>
 
           {/* Main hero content — two column layout */}
-          <div className="max-w-[1400px] mx-auto w-full z-10 flex-1 flex flex-col lg:flex-row items-center justify-between gap-6 lg:gap-10 pt-20 sm:pt-24">
+          <div className="max-w-[1400px] mx-auto w-full z-10 flex-1 flex flex-col lg:flex-row items-center justify-between gap-6 lg:gap-10 pt-20 sm:pt-24 px-6 sm:px-10 lg:px-16">
               
               {/* LEFT: Text content (more compact, shifted upwards) */}
-              <div className="w-full lg:w-[38%] flex-shrink-0 flex flex-col justify-center min-w-0 pt-0 lg:pt-2 lg:-mt-12">
+              <div className="w-full lg:w-[46%] lg:pl-8 flex-shrink-0 flex flex-col justify-center min-w-0 pt-0 lg:pt-2 lg:-mt-12">
                   <div className="mb-6 sm:mb-8">
                       <div className="h-[30px] sm:h-[48px] md:h-[60px] lg:h-[72px] xl:h-[96px] text-[#f1eae1] mb-1 relative z-10 flex items-center">
                           <svg 
@@ -499,11 +499,11 @@ const Home: React.FC = () => {
             : "px-4 sm:px-6 relative"
           }
         >
-          <div className="max-w-[1400px] mx-auto w-full font-mono">
+          <div className="max-w-[1400px] mx-auto w-full font-mono px-6 sm:px-10 lg:px-16">
             <div className="flex flex-col lg:flex-row items-stretch justify-between gap-10">
               
               {/* Left Column (Desktop Title) */}
-              <div className="hidden lg:flex w-full lg:w-[24%] flex-shrink-0 flex-col justify-center pr-4">
+              <div className="hidden lg:flex w-full lg:w-[30%] lg:pl-8 flex-shrink-0 flex-col justify-center pr-4">
                   <div className="flex items-center gap-2 text-xs font-mono text-slate-500 mb-6">
                       <span className="text-green-500">{'>'}</span>
                       <span className="text-slate-400">cat skills.sh</span>
@@ -799,7 +799,7 @@ const Home: React.FC = () => {
       {/* --- PROJECTS SECTION --- */}
       <section id="projects" className="pt-16 md:pt-20 pb-10 md:pb-14 relative bg-[#050505]" ref={projectsRef}>
         <div className="max-w-[1400px] mx-auto w-full px-6 sm:px-10 lg:px-16 font-mono">
-            <div className="lg:pl-12">
+            <div className="lg:pl-8">
             {/* Title */}
             <div className="mb-10">
                 <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tighter mb-3 uppercase">
@@ -893,7 +893,7 @@ const Home: React.FC = () => {
           <div className="max-w-[1400px] mx-auto w-full px-6 sm:px-10 lg:px-16">
             {/* Top bar — terminal-style */}
             <div 
-              className="flex items-center gap-2 text-xs font-mono text-slate-500 mb-6 lg:pl-12"
+              className="flex items-center gap-2 text-xs font-mono text-slate-500 mb-6 lg:pl-8"
               style={{ opacity: aboutScrollProgress > 0 ? 1 : 0 }}
             >
               <span className="text-green-500">{'>'}</span>
@@ -904,7 +904,7 @@ const Home: React.FC = () => {
 
             <div className="flex flex-col lg:flex-row gap-10 lg:gap-16 items-start">
               {/* Left Column: Hacker text streaming */}
-              <div className="flex-1 min-w-0 lg:pl-12">
+              <div className="flex-1 min-w-0 lg:pl-8">
                 {/* Title — decrypts as the heading itself */}
                 {isLineVisible(0, 8) && (() => {
                   const decoded = decryptLine('ABOUT ME', 0, 8);
@@ -1046,7 +1046,7 @@ const Home: React.FC = () => {
               ? 'opacity-100 translate-y-0 scale-100' 
               : 'opacity-0 translate-y-12 scale-98 pointer-events-none'
         }`}>
-            <div className="lg:pl-12">
+            <div className="lg:pl-8">
                 <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tighter mb-3 uppercase font-mono">
                     CONTACT
                 </h2>
