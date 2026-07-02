@@ -580,31 +580,38 @@ const Home: React.FC = () => {
                               <span>{'>'}</span> 5. DATABASES & VECTOR DB
                           </h3>
                           <div className="flex-1 flex items-center justify-center">
-                              <div className="grid grid-cols-5 gap-y-4 gap-x-1 justify-items-center text-center items-center w-full">
-                                  {/* PostgreSQL */}
-                                  <div className="flex flex-col items-center gap-2 group cursor-pointer">
-                                      <img src="/SVG_ICONS/devicon--postgresql.svg" className="w-10 h-10 sm:w-12 sm:h-12 transition-transform duration-500 cubic-bezier(0.175, 0.885, 0.32, 1.275) group-hover:scale-125" alt="PostgreSQL" />
-                                      <span className="text-[10px] sm:text-xs md:text-[13px] text-slate-400 group-hover:text-white transition-colors duration-200">PostgreSQL</span>
+                              <div className="flex flex-col gap-y-4 w-full items-center">
+                                  {/* Row 1: Relational & Document Databases */}
+                                  <div className="grid grid-cols-3 gap-x-4 w-full justify-items-center">
+                                      {/* PostgreSQL */}
+                                      <div className="flex flex-col items-center gap-2 group cursor-pointer">
+                                          <img src="/SVG_ICONS/devicon--postgresql.svg" className="w-10 h-10 sm:w-12 sm:h-12 transition-transform duration-500 cubic-bezier(0.175, 0.885, 0.32, 1.275) group-hover:scale-125" alt="PostgreSQL" />
+                                          <span className="text-[10px] sm:text-xs md:text-[13px] text-slate-400 group-hover:text-white transition-colors duration-200">PostgreSQL</span>
+                                      </div>
+                                      {/* MySQL */}
+                                      <div className="flex flex-col items-center gap-2 group cursor-pointer">
+                                          <img src="/SVG_ICONS/logos--mysql.svg" className="w-10 h-10 sm:w-12 sm:h-12 transition-transform duration-500 cubic-bezier(0.175, 0.885, 0.32, 1.275) group-hover:scale-125" alt="MySQL" />
+                                          <span className="text-[10px] sm:text-xs md:text-[13px] text-slate-400 group-hover:text-white transition-colors duration-200">MySQL</span>
+                                      </div>
+                                      {/* MongoDB */}
+                                      <div className="flex flex-col items-center gap-2 group cursor-pointer">
+                                          <img src="/SVG_ICONS/devicon--mongodb.svg" className="w-10 h-10 sm:w-12 sm:h-12 transition-transform duration-500 cubic-bezier(0.175, 0.885, 0.32, 1.275) group-hover:scale-125" alt="MongoDB" />
+                                          <span className="text-[10px] sm:text-xs md:text-[13px] text-slate-400 group-hover:text-white transition-colors duration-200">MongoDB</span>
+                                      </div>
                                   </div>
-                                  {/* MySQL */}
-                                  <div className="flex flex-col items-center gap-2 group cursor-pointer">
-                                      <img src="/SVG_ICONS/logos--mysql.svg" className="w-10 h-10 sm:w-12 sm:h-12 transition-transform duration-500 cubic-bezier(0.175, 0.885, 0.32, 1.275) group-hover:scale-125" alt="MySQL" />
-                                      <span className="text-[10px] sm:text-xs md:text-[13px] text-slate-400 group-hover:text-white transition-colors duration-200">MySQL</span>
-                                  </div>
-                                  {/* MongoDB */}
-                                  <div className="flex flex-col items-center gap-2 group cursor-pointer">
-                                      <img src="/SVG_ICONS/devicon--mongodb.svg" className="w-10 h-10 sm:w-12 sm:h-12 transition-transform duration-500 cubic-bezier(0.175, 0.885, 0.32, 1.275) group-hover:scale-125" alt="MongoDB" />
-                                      <span className="text-[10px] sm:text-xs md:text-[13px] text-slate-400 group-hover:text-white transition-colors duration-200">MongoDB</span>
-                                  </div>
-                                  {/* Qdrant */}
-                                  <div className="flex flex-col items-center gap-2 group cursor-pointer">
-                                      <img src="/SVG_ICONS/logos--qdrant-icon.svg" className="w-10 h-10 sm:w-12 sm:h-12 transition-transform duration-500 cubic-bezier(0.175, 0.885, 0.32, 1.275) group-hover:scale-125" alt="Qdrant" />
-                                      <span className="text-[10px] sm:text-xs md:text-[13px] text-slate-400 group-hover:text-white transition-colors duration-200">Qdrant</span>
-                                  </div>
-                                  {/* Chroma */}
-                                  <div className="flex flex-col items-center gap-2 group cursor-pointer">
-                                      <img src="/SVG_ICONS/logos--chroma.svg" className="w-10 h-10 sm:w-12 sm:h-12 transition-transform duration-500 cubic-bezier(0.175, 0.885, 0.32, 1.275) group-hover:scale-125" alt="Chroma" />
-                                      <span className="text-[10px] sm:text-xs md:text-[13px] text-slate-400 group-hover:text-white transition-colors duration-200">Chroma</span>
+                                  
+                                  {/* Row 2: Vector Databases */}
+                                  <div className="flex justify-center gap-x-12 w-full">
+                                      {/* Qdrant */}
+                                      <div className="flex flex-col items-center gap-2 group cursor-pointer w-[70px] sm:w-[80px]">
+                                          <img src="/SVG_ICONS/logos--qdrant-icon.svg" className="w-10 h-10 sm:w-12 sm:h-12 transition-transform duration-500 cubic-bezier(0.175, 0.885, 0.32, 1.275) group-hover:scale-125" alt="Qdrant" />
+                                          <span className="text-[10px] sm:text-xs md:text-[13px] text-slate-400 group-hover:text-white transition-colors duration-200">Qdrant</span>
+                                      </div>
+                                      {/* Chroma */}
+                                      <div className="flex flex-col items-center gap-2 group cursor-pointer w-[70px] sm:w-[80px]">
+                                          <img src="/SVG_ICONS/logos--chroma.svg" className="w-10 h-10 sm:w-12 sm:h-12 transition-transform duration-500 cubic-bezier(0.175, 0.885, 0.32, 1.275) group-hover:scale-125" alt="Chroma" />
+                                          <span className="text-[10px] sm:text-xs md:text-[13px] text-slate-400 group-hover:text-white transition-colors duration-200">Chroma</span>
+                                      </div>
                                   </div>
                               </div>
                           </div>
