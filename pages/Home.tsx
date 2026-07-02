@@ -20,8 +20,21 @@ const Home: React.FC = () => {
   // Contact section scroll-reveal state
   const contactRef = useRef<HTMLElement>(null);
   const [contactVisible, setContactVisible] = useState(false);
+  const [isScreenshotMode, setIsScreenshotMode] = useState(false);
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const isTall = window.innerHeight > 2200;
+      setIsScreenshotMode(isTall);
+      if (isTall) {
+        setContactVisible(true);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isScreenshotMode) return;
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -35,7 +48,7 @@ const Home: React.FC = () => {
       observer.observe(contactRef.current);
     }
     return () => observer.disconnect();
-  }, []);
+  }, [isScreenshotMode]);
 
   const handleInputChange = (field: keyof typeof nanoForm) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -150,6 +163,13 @@ const Home: React.FC = () => {
     const measure = () => {
       ticking = false;
 
+      if (isScreenshotMode) {
+        setScrollProgress(1);
+        setSkillsScrollProgress(1);
+        setAboutScrollProgress(1);
+        return;
+      }
+
       const heroWrapper = heroWrapperRef.current;
       if (heroWrapper) {
         const rect = heroWrapper.getBoundingClientRect();
@@ -192,7 +212,7 @@ const Home: React.FC = () => {
     window.addEventListener('scroll', onScroll, { passive: true });
     measure();
     return () => window.removeEventListener('scroll', onScroll);
-  }, [isDesktop]);
+  }, [isDesktop, isScreenshotMode]);
 
   // Mouse tracking for the hover card
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -470,11 +490,11 @@ const Home: React.FC = () => {
       {/* --- SKILLS SECTION --- */}
       <div 
         id="skills"
-        ref={isDesktop ? skillsWrapperRef : null} 
-        className={isDesktop ? "relative h-[350vh] bg-[#050505]" : "relative bg-[#050505] py-16 md:py-24"}
+        ref={isDesktop && !isScreenshotMode ? skillsWrapperRef : null} 
+        className={isDesktop && !isScreenshotMode ? "relative h-[350vh] bg-[#050505]" : "relative bg-[#050505] py-16 md:py-24"}
       >
         <section 
-          className={isDesktop 
+          className={isDesktop && !isScreenshotMode 
             ? "sticky top-0 h-[100dvh] flex flex-col justify-center px-4 sm:px-6 relative overflow-hidden"
             : "px-4 sm:px-6 relative"
           }
@@ -867,13 +887,13 @@ const Home: React.FC = () => {
       {/* --- ABOUT SECTION (Scroll-Pinned — Hacker Decryption Reveal) --- */}
       <div 
         id="about" 
-        ref={aboutWrapperRef} 
+        ref={isScreenshotMode ? null : aboutWrapperRef} 
         className="relative bg-[#050505]"
-        style={{ height: '300vh' }}
+        style={{ height: isScreenshotMode ? 'auto' : '300vh' }}
       >
         <section 
           ref={aboutRef}
-          className="sticky top-0 h-[100dvh] flex flex-col justify-center px-6 overflow-hidden pt-20"
+          className={`${isScreenshotMode ? 'relative h-auto py-16 md:py-24' : 'sticky top-0 h-[100dvh]'} flex flex-col justify-center px-6 overflow-hidden pt-20`}
         >
           <div className="max-w-7xl mx-auto w-full">
             {/* Top bar — terminal-style */}
