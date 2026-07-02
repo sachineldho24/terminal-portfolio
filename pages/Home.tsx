@@ -17,6 +17,26 @@ const Home: React.FC = () => {
   const [nanoSending, setNanoSending] = useState(false);
   const [nanoModified, setNanoModified] = useState(false);
 
+  // Contact section scroll-reveal state
+  const contactRef = useRef<HTMLElement>(null);
+  const [contactVisible, setContactVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setContactVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    if (contactRef.current) {
+      observer.observe(contactRef.current);
+    }
+    return () => observer.disconnect();
+  }, []);
+
   const handleInputChange = (field: keyof typeof nanoForm) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -971,16 +991,20 @@ const Home: React.FC = () => {
       </div>
 
       {/* --- CONTACT SECTION --- */}
-      <section id="contact" className="py-16 md:py-24 px-6 bg-[#050505]">
+      <section id="contact" ref={contactRef} className="py-16 md:py-24 px-6 bg-[#050505]">
         <div className="max-w-6xl mx-auto">
-            <h2 className="text-6xl md:text-8xl font-black text-white mb-2 tracking-tighter flex items-center gap-4 animate-glow">
+            <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tighter mb-3 uppercase flex items-center gap-4 animate-glow">
                 CONTACT <span className="text-green-500 animate-pulse">{'>'}_</span>
             </h2>
             <p className="text-slate-400 text-base sm:text-lg font-mono mb-6 uppercase tracking-wider pl-2 border-l-2 border-green-500/50 select-none">
                 Let's connect. Execute command: send message.
             </p>
 
-            <div className="border border-green-500/20 bg-[#020202] rounded overflow-hidden shadow-[0_0_30px_rgba(34,197,94,0.05)] w-full">
+            <div className={`border border-green-500/20 bg-[#020202] rounded overflow-hidden shadow-[0_0_30px_rgba(34,197,94,0.05)] w-full transition-all duration-1000 ease-out transform ${
+                contactVisible 
+                  ? 'opacity-100 translate-y-0 scale-100' 
+                  : 'opacity-0 translate-y-12 scale-98 pointer-events-none'
+            }`}>
                 {/* Nano Header Bar */}
                 <div className="bg-green-500 text-black font-mono text-xs px-4 py-1.5 flex justify-between font-bold select-none">
                     <span>GNU nano 7.2</span>
