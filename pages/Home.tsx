@@ -466,7 +466,7 @@ const Home: React.FC = () => {
                               <span>{'>'}</span> 2. BACKEND
                           </h3>
                           <div className="flex-1 flex items-center justify-center">
-                              <div className="grid grid-cols-4 gap-y-4 gap-x-3 justify-items-center text-center items-center w-full">
+                              <div className="grid grid-cols-3 gap-y-4 gap-x-3 justify-items-center text-center items-center w-full">
                                   {/* Python */}
                                   <div className="flex flex-col items-center gap-2 group cursor-pointer">
                                       <img src="/SVG_ICONS/devicon--python.svg" className="w-11 h-11 sm:w-14 sm:h-14 transition-transform duration-500 cubic-bezier(0.175, 0.885, 0.32, 1.275) group-hover:scale-125" alt="Python" />
@@ -481,11 +481,6 @@ const Home: React.FC = () => {
                                   <div className="flex flex-col items-center gap-2 group cursor-pointer">
                                       <img src="/SVG_ICONS/devicon--fastapi.svg" className="w-11 h-11 sm:w-14 sm:h-14 transition-transform duration-500 cubic-bezier(0.175, 0.885, 0.32, 1.275) group-hover:scale-125" alt="FastAPI" />
                                       <span className="text-xs sm:text-[13px] md:text-[14px] text-slate-400 group-hover:text-white transition-colors duration-200">FastAPI</span>
-                                  </div>
-                                  {/* Supabase */}
-                                  <div className="flex flex-col items-center gap-2 group cursor-pointer">
-                                      <img src="/SVG_ICONS/devicon--supabase.svg" className="w-11 h-11 sm:w-14 sm:h-14 transition-transform duration-500 cubic-bezier(0.175, 0.885, 0.32, 1.275) group-hover:scale-125" alt="Supabase" />
-                                      <span className="text-xs sm:text-[13px] md:text-[14px] text-slate-400 group-hover:text-white transition-colors duration-200">Supabase</span>
                                   </div>
                               </div>
                           </div>
@@ -581,8 +576,8 @@ const Home: React.FC = () => {
                           </h3>
                           <div className="flex-1 flex items-center justify-center">
                               <div className="flex flex-col gap-y-4 w-full items-center">
-                                  {/* Row 1: Relational & Document Databases */}
-                                  <div className="grid grid-cols-3 gap-x-4 w-full justify-items-center">
+                                  {/* Row 1: Relational, Document & BaaS Databases */}
+                                  <div className="grid grid-cols-4 gap-x-4 w-full justify-items-center">
                                       {/* PostgreSQL */}
                                       <div className="flex flex-col items-center gap-2 group cursor-pointer">
                                           <img src="/SVG_ICONS/devicon--postgresql.svg" className="w-10 h-10 sm:w-12 sm:h-12 transition-transform duration-500 cubic-bezier(0.175, 0.885, 0.32, 1.275) group-hover:scale-125" alt="PostgreSQL" />
@@ -597,6 +592,11 @@ const Home: React.FC = () => {
                                       <div className="flex flex-col items-center gap-2 group cursor-pointer">
                                           <img src="/SVG_ICONS/devicon--mongodb.svg" className="w-10 h-10 sm:w-12 sm:h-12 transition-transform duration-500 cubic-bezier(0.175, 0.885, 0.32, 1.275) group-hover:scale-125" alt="MongoDB" />
                                           <span className="text-[10px] sm:text-xs md:text-[13px] text-slate-400 group-hover:text-white transition-colors duration-200">MongoDB</span>
+                                      </div>
+                                      {/* Supabase */}
+                                      <div className="flex flex-col items-center gap-2 group cursor-pointer">
+                                          <img src="/SVG_ICONS/devicon--supabase.svg" className="w-10 h-10 sm:w-12 sm:h-12 transition-transform duration-500 cubic-bezier(0.175, 0.885, 0.32, 1.275) group-hover:scale-125" alt="Supabase" />
+                                          <span className="text-[10px] sm:text-xs md:text-[13px] text-slate-400 group-hover:text-white transition-colors duration-200">Supabase</span>
                                       </div>
                                   </div>
                                   
