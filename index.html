@@ -127,7 +127,12 @@
         100% { top: 100%; }
       }
 
-      #projects, #about, #contact { content-visibility: auto; contain-intrinsic-size: 1px 800px; }
+      #projects, #contact { content-visibility: auto; contain-intrinsic-size: 1px 800px; }
+
+      /* GPU-composited scanline — avoids layout/paint thrash */
+      .scanlines {
+        will-change: background-position;
+      }
     </style>
   <script type="importmap">
 {

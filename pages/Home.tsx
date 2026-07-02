@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { PROJECTS, SOCIAL_LINKS, CONTACT_EMAIL } from '../constants';
 import TypingText from '../components/TypingText';
 import ProjectListItem from '../components/ProjectListItem';
@@ -12,7 +12,8 @@ const Home: React.FC = () => {
   const [currentTime, setCurrentTime] = useState('');
   const projectsRef = useRef<HTMLDivElement>(null);
   const aboutRef = useRef<HTMLDivElement>(null);
-  const [aboutVisible, setAboutVisible] = useState(true);
+  const aboutWrapperRef = useRef<HTMLDivElement>(null);
+  const [aboutScrollProgress, setAboutScrollProgress] = useState(0);
 
   const [isDesktop, setIsDesktop] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -57,6 +58,17 @@ const Home: React.FC = () => {
         if (scrollRange > 0) {
           const progress = Math.max(0, Math.min(1, -rect.top / scrollRange));
           setSkillsScrollProgress(progress);
+        }
+      }
+
+      // About section scroll progress
+      const aboutWrapper = aboutWrapperRef.current;
+      if (aboutWrapper) {
+        const rect = aboutWrapper.getBoundingClientRect();
+        const scrollRange = aboutWrapper.offsetHeight - window.innerHeight;
+        if (scrollRange > 0) {
+          const progress = Math.max(0, Math.min(1, -rect.top / scrollRange));
+          setAboutScrollProgress(progress);
         }
       }
     };
@@ -107,24 +119,86 @@ const Home: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setAboutVisible(true);
-        }
-      },
-      { threshold: 0.02 }
-    );
+  // ── Hacker text decryption system ──
+  // Glitch charset for the scramble effect
+  const GLITCH_CHARS = '01アイウエオカキクケコサシスセソ!@#$%^&*<>{}[]|/\\~`░▒▓█▀▄';
 
-    const el = aboutRef.current;
-    if (el) {
-      observer.observe(el);
-    }
-    return () => {
-      if (el) observer.unobserve(el);
-    };
+  // Deterministic pseudo-random from seed (avoids re-randomizing every render)
+  const seededChar = useCallback((index: number, tick: number) => {
+    const h = ((index * 2654435761) ^ (tick * 40503)) >>> 0;
+    return GLITCH_CHARS[h % GLITCH_CHARS.length];
   }, []);
+
+  // Generates the decrypted text for a line based on scroll progress
+  // Returns an array of {char, resolved} objects
+  const decryptLine = useCallback((text: string, lineIndex: number, totalLines: number) => {
+    const revealZone = 0.65;
+    const lineStart = (lineIndex / totalLines) * revealZone;
+    const lineEnd = lineStart + (1.2 / totalLines) * revealZone + 0.06;
+    const lineProgress = Math.max(0, Math.min(1, (aboutScrollProgress - lineStart) / (lineEnd - lineStart)));
+
+    // How many characters are fully resolved
+    const resolvedCount = Math.floor(lineProgress * text.length);
+    // Sub-character progress for the "active" character (creates cycling effect)
+    const subProgress = (lineProgress * text.length) - resolvedCount;
+    // Use scroll progress as a tick for glyph cycling
+    const tick = Math.floor(aboutScrollProgress * 200);
+
+    return text.split('').map((char, i) => {
+      if (i < resolvedCount) {
+        return { char, resolved: true, active: false };
+      } else if (i === resolvedCount) {
+        // Active decrypting character — cycles through glyphs
+        if (char === ' ') return { char: ' ', resolved: false, active: true };
+        return { char: subProgress > 0.7 ? char : seededChar(i + lineIndex * 100, tick), resolved: false, active: true };
+      } else if (i < resolvedCount + 8) {
+        // "Wake zone" — nearby chars flicker with glyphs
+        if (char === ' ') return { char: ' ', resolved: false, active: false };
+        return { char: seededChar(i + lineIndex * 100, tick), resolved: false, active: false };
+      } else {
+        // Not yet reached — invisible
+        return { char: '', resolved: false, active: false };
+      }
+    });
+  }, [aboutScrollProgress, seededChar]);
+
+  // Line visibility (is it started at all?)
+  const isLineVisible = useCallback((lineIndex: number, totalLines: number) => {
+    const revealZone = 0.65;
+    const lineStart = (lineIndex / totalLines) * revealZone;
+    return aboutScrollProgress >= lineStart - 0.01;
+  }, [aboutScrollProgress]);
+
+  // Image reveal: triggers after ~60% of the about scroll
+  const imageRevealProgress = Math.max(0, Math.min(1, (aboutScrollProgress - 0.55) / 0.25));
+  const imageEased = imageRevealProgress < 0.5
+    ? 4 * imageRevealProgress * imageRevealProgress * imageRevealProgress
+    : 1 - Math.pow(-2 * imageRevealProgress + 2, 3) / 2;
+
+  // Render a single hacker-decoded line
+  const HackerLine = useCallback(({ text, lineIndex, totalLines, prefix }: { text: string; lineIndex: number; totalLines: number; prefix?: React.ReactNode }) => {
+    const visible = isLineVisible(lineIndex, totalLines);
+    if (!visible) return null; // don't render anything until line's scroll zone starts
+    const decoded = decryptLine(text, lineIndex, totalLines);
+    const allResolved = decoded.every(d => d.resolved);
+
+    return (
+      <div className="font-mono text-sm md:text-base leading-relaxed mb-4">
+        {prefix}
+        {decoded.map((d, i) => {
+          if (d.char === '') return null;
+          if (d.resolved) {
+            return <span key={i} className="text-slate-300">{d.char}</span>;
+          }
+          if (d.active) {
+            return <span key={i} className="text-green-400 font-bold" style={{ textShadow: '0 0 8px #22c55e' }}>{d.char}</span>;
+          }
+          return <span key={i} className="text-green-500/40">{d.char}</span>;
+        })}
+        {!allResolved && <span className="inline-block w-2 h-4 bg-green-500 align-middle ml-0.5 animate-pulse shadow-[0_0_8px_#22c55e]" />}
+      </div>
+    );
+  }, [decryptLine, isLineVisible]);
 
   const getCardStyle = (index: number) => {
     if (!isDesktop) return {};
@@ -584,34 +658,17 @@ const Home: React.FC = () => {
       </div>
 
       {/* --- PROJECTS SECTION --- */}
-      <section id="projects" className="py-16 md:py-24 px-6 relative bg-[#050505]" ref={projectsRef}>
+      <section id="projects" className="pt-16 md:pt-20 pb-10 md:pb-14 px-6 relative bg-[#050505]" ref={projectsRef}>
         <div className="max-w-7xl mx-auto">
             {/* Title */}
-            <div className="mb-12">
+            <div className="mb-10">
                 <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tighter mb-3 uppercase">
                     PROJECTS<span className="text-green-500 animate-pulse">_</span>
                 </h2>
                 <p className="text-slate-400 text-sm sm:text-base">Selected systems, applications, and source code.</p>
             </div>
 
-            <div className="flex items-center gap-3 mb-8 text-slate-400 text-sm font-mono mt-6">
-                <span className="text-green-500">user@portfolio:~/projects$</span>
-                <span className="text-slate-200">ls -la</span>
-            </div>
-
-            <div className="relative min-h-[400px]">
-                {/* File List Header */}
-                <div className="hidden lg:flex gap-4 px-2 py-2 text-xs text-slate-600 border-b border-slate-800 mb-2 font-mono uppercase tracking-wider">
-                    <span className="w-24">Permissions</span>
-                    <span className="w-4 text-center">#</span>
-                    <span className="w-12 text-center">User</span>
-                    <span className="w-12 text-center">Group</span>
-                    <span className="w-16 text-right">Size</span>
-                    <span className="w-24 text-right">Date</span>
-                    <span className="w-4"></span>
-                    <span className="flex-1">Name</span>
-                </div>
-
+            <div className="relative">
                 {/* File List */}
                 <div className="space-y-1">
                     {PROJECTS.map((project) => (
@@ -681,61 +738,165 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* --- ABOUT SECTION --- */}
-      <section id="about" ref={aboutRef} className="py-16 md:py-24 px-6 bg-[#050505] overflow-hidden">
-         <div className="max-w-7xl mx-auto">
-            <div className="grid md:grid-cols-2 gap-12 lg:gap-24 items-start">
-                <div>
-                    <div className={`flex items-baseline gap-4 mb-10 transition-all duration-1000 ease-out transform ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-                         <h2 className="text-5xl font-black text-white tracking-tighter uppercase">
-                             ABOUT ME<span className="text-green-500 animate-pulse">_</span>
-                         </h2>
-                    </div>
-
-                    <div className={`space-y-8 text-slate-300 leading-relaxed text-sm md:text-base font-light transition-all duration-1000 delay-200 ease-out transform ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-                         <p>
-                            <span className="text-green-500 font-bold mr-2">{'>'}</span>
-                            Hello. I'm Sachin Eldho, a full-stack engineer specializing in bridging the gap between state-of-the-art AI capabilities and premium, production-ready frontends. I build software that puts AI to work — ranging from engineering Retrieval-Augmented Generation (RAG) pipelines to shipping a complete profit-analytics SaaS. I enjoy architecting systems from database models to responsive web and mobile user interfaces. My goal is always to deliver clean, highly optimized code that solves real business needs.
-                         </p>
-                         <p>
-                            I work across the full stack using React, TypeScript, React Native, and Python (FastAPI/Supabase), integrating models from Gemini, Groq, and Ollama into real-world applications. By combining engineering rigor with design sensibilities, I build tools that look expensive and perform smoothly. I love collaborating with teams to take projects from zero to launch, ensuring fast delivery and robust performance. Let's build something exceptional together.
-                         </p>
-                    </div>
-                </div>
-
-                {/* Right Side - Animated "Video" Loop Placeholder */}
-                <div className={`relative aspect-square bg-[#080808] border border-slate-800 overflow-hidden group transition-all duration-1000 delay-400 ease-out transform ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-                     {/* Static Image Base */}
-                     <img 
-                        src="/about-profile.png" 
-                        alt="Profile visualization" 
-                        className="w-full h-full object-contain opacity-60 mix-blend-luminosity grayscale group-hover:grayscale-0 transition-all duration-700" 
-                        loading="lazy"
-                        decoding="async"
-                     />
-                     
-                     {/* Horizontal Scan Line */}
-                     <div className="absolute top-0 left-0 w-full h-[2px] bg-green-500/50 shadow-[0_0_15px_rgba(34,197,94,0.8)] animate-[scan_4s_linear_infinite] z-20"></div>
-                     
-                     {/* HUD Elements overlay */}
-                     <div className="absolute inset-0 border-[1px] border-white/5 m-4 pointer-events-none"></div>
-                     
-                     <div className="absolute top-8 right-8 flex flex-col items-end gap-1 font-mono text-[10px] text-green-500">
-                        <span className="bg-black/80 px-1">REC</span>
-                        <span className="bg-black/80 px-1">{currentTime.replace(/[\[\]]/g, '')}</span>
-                     </div>
-                     
-                     <div className="absolute bottom-8 left-8 font-mono text-[10px] text-green-500">
-                        <span className="bg-black/80 px-1 tracking-widest">TARGET_ACQUIRED</span>
-                     </div>
-                     
-                     {/* Corner Brackets */}
-                     <div className="absolute top-6 left-6 w-4 h-4 border-t border-l border-green-500/60"></div>
-                     <div className="absolute bottom-6 right-6 w-4 h-4 border-b border-r border-green-500/60"></div>
-                </div>
+      {/* --- ABOUT SECTION (Scroll-Pinned — Hacker Decryption Reveal) --- */}
+      <div 
+        id="about" 
+        ref={aboutWrapperRef} 
+        className="relative bg-[#050505]"
+        style={{ height: '300vh' }}
+      >
+        <section 
+          ref={aboutRef}
+          className="sticky top-0 h-[100dvh] flex flex-col justify-center px-6 overflow-hidden pt-20"
+        >
+          <div className="max-w-7xl mx-auto w-full">
+            {/* Top bar — terminal-style */}
+            <div 
+              className="flex items-center gap-2 text-xs font-mono text-slate-500 mb-6"
+              style={{ opacity: aboutScrollProgress > 0 ? 1 : 0 }}
+            >
+              <span className="text-green-500">{'>'}</span>
+              <span className="text-slate-400">decrypting ./about_me.dat</span>
+              <span className="text-green-500/60 ml-2">[{Math.min(100, Math.round(aboutScrollProgress * 130))}%]</span>
+              {aboutScrollProgress < 0.77 && <span className="w-1.5 h-4 bg-green-500 inline-block animate-pulse shadow-[0_0_6px_#22c55e]" />}
             </div>
-         </div>
-      </section>
+
+            <div className="flex flex-col lg:flex-row gap-10 lg:gap-16 items-start">
+              {/* Left Column: Hacker text streaming */}
+              <div className="flex-1 min-w-0">
+                {/* Title — decrypts as the heading itself */}
+                {isLineVisible(0, 8) && (() => {
+                  const decoded = decryptLine('ABOUT ME', 0, 8);
+                  const allResolved = decoded.every(d => d.resolved);
+                  return (
+                    <h2 className="text-4xl sm:text-5xl font-black tracking-tighter uppercase mb-8 font-mono">
+                      {decoded.map((d, i) => {
+                        if (d.char === '') return null;
+                        if (d.resolved) return <span key={i} className="text-white">{d.char}</span>;
+                        if (d.active) return <span key={i} className="text-green-400" style={{ textShadow: '0 0 12px #22c55e' }}>{d.char}</span>;
+                        return <span key={i} className="text-green-500/30">{d.char}</span>;
+                      })}
+                      {allResolved && <span className="text-green-500 animate-pulse">_</span>}
+                      {!allResolved && <span className="inline-block w-3 h-8 bg-green-500 align-middle ml-1 animate-pulse shadow-[0_0_10px_#22c55e]" />}
+                    </h2>
+                  );
+                })()}
+
+                {/* Text lines streaming in */}
+                <HackerLine 
+                  text={`Hello. I'm Sachin Eldho, a full-stack engineer specializing in bridging AI capabilities and premium, production-ready frontends.`}
+                  lineIndex={1}
+                  totalLines={8}
+                  prefix={<span className="text-green-500 font-bold mr-1">{'> '}</span>}
+                />
+                <HackerLine 
+                  text="I build software that puts AI to work — from RAG pipelines to shipping a complete profit-analytics SaaS."
+                  lineIndex={2}
+                  totalLines={8}
+                  prefix={<span className="text-green-500 font-bold mr-1">{'> '}</span>}
+                />
+                <HackerLine 
+                  text="I architect systems from database models to responsive web and mobile UIs. Clean, optimized code is the goal."
+                  lineIndex={3}
+                  totalLines={8}
+                  prefix={<span className="text-green-500 font-bold mr-1">{'> '}</span>}
+                />
+                <HackerLine 
+                  text="Stack: React, TypeScript, React Native, Python, FastAPI, Supabase, Gemini, Groq, Ollama."
+                  lineIndex={4}
+                  totalLines={8}
+                  prefix={<span className="text-green-500 font-bold mr-1">{'> '}</span>}
+                />
+                <HackerLine 
+                  text="Engineering rigor + design sensibility = tools that look expensive and perform smoothly."
+                  lineIndex={5}
+                  totalLines={8}
+                  prefix={<span className="text-green-500 font-bold mr-1">{'> '}</span>}
+                />
+                <HackerLine 
+                  text="Let's build something exceptional together."
+                  lineIndex={6}
+                  totalLines={8}
+                  prefix={<span className="text-green-500 font-bold mr-1">{'> '}</span>}
+                />
+              </div>
+
+              {/* Right Side — Target Locked Image (smaller, compact) */}
+              <div 
+                className="relative w-full max-w-[320px] lg:max-w-[340px] aspect-square flex-shrink-0 mx-auto lg:mx-0 overflow-hidden"
+                style={{
+                  opacity: imageEased,
+                  transform: `scale(${0.88 + imageEased * 0.12}) translate3d(0, ${(1 - imageEased) * 20}px, 0)`,
+                  willChange: 'transform, opacity',
+                }}
+              >
+                {/* Rotating outer reticle */}
+                <div 
+                  className="absolute inset-0 rounded-full border-2 border-green-500/25 m-2 pointer-events-none"
+                  style={{ transform: `rotate(${aboutScrollProgress * 90}deg)`, borderStyle: 'dashed' }}
+                />
+                {/* Inner reticle */}
+                <div 
+                  className="absolute inset-0 rounded-full border border-green-500/15 m-8 pointer-events-none"
+                  style={{ transform: `rotate(${-aboutScrollProgress * 60}deg)`, borderStyle: 'dashed' }}
+                />
+
+                {/* Image container */}
+                <div className="absolute inset-0 bg-[#080808] border border-slate-800 overflow-hidden group">
+                  <img 
+                    src="/about-profile.png" 
+                    alt="Sachin Eldho" 
+                    className="w-full h-full object-contain grayscale group-hover:grayscale-0 transition-all duration-700" 
+                    loading="lazy"
+                    decoding="async"
+                    style={{
+                      opacity: 0.3 + imageEased * 0.5,
+                      mixBlendMode: imageEased > 0.8 ? 'normal' : 'luminosity',
+                    }}
+                  />
+                  
+                  {/* Scan line */}
+                  <div 
+                    className="absolute left-0 w-full h-[2px] bg-green-500/60 shadow-[0_0_15px_rgba(34,197,94,0.8)] z-20"
+                    style={{ top: `${(aboutScrollProgress * 200) % 100}%` }}
+                  />
+                  
+                  {/* Crosshair */}
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10">
+                    <div className="w-6 h-[1px] bg-green-500/40" />
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1px] h-6 bg-green-500/40" />
+                  </div>
+
+                  {/* HUD overlays */}
+                  <div className="absolute top-4 right-4 flex flex-col items-end gap-1 font-mono text-[9px] text-green-500">
+                    <span className="bg-black/80 px-1 py-0.5 flex items-center gap-1">
+                      <span className="w-1 h-1 bg-red-500 rounded-full animate-pulse" /> REC
+                    </span>
+                  </div>
+                  <div 
+                    className="absolute bottom-4 left-4 font-mono text-[9px] text-green-500"
+                    style={{ opacity: imageEased > 0.6 ? 1 : 0, transition: 'opacity 0.4s ease' }}
+                  >
+                    <span className="bg-black/80 px-1 py-0.5 tracking-widest">TARGET_LOCKED</span>
+                  </div>
+                  <div 
+                    className="absolute bottom-4 right-4 font-mono text-[9px] text-green-500"
+                    style={{ opacity: imageEased > 0.8 ? 1 : 0, transition: 'opacity 0.4s ease' }}
+                  >
+                    <span className="bg-black/80 px-1 py-0.5 tracking-wider">MATCH: 99.7%</span>
+                  </div>
+
+                  {/* Corner brackets */}
+                  <div className="absolute top-3 left-3 w-5 h-5 border-t-2 border-l-2 border-green-500/70" style={{ transform: `scale(${imageEased})`, transformOrigin: 'top left' }} />
+                  <div className="absolute top-3 right-3 w-5 h-5 border-t-2 border-r-2 border-green-500/70" style={{ transform: `scale(${imageEased})`, transformOrigin: 'top right' }} />
+                  <div className="absolute bottom-3 left-3 w-5 h-5 border-b-2 border-l-2 border-green-500/70" style={{ transform: `scale(${imageEased})`, transformOrigin: 'bottom left' }} />
+                  <div className="absolute bottom-3 right-3 w-5 h-5 border-b-2 border-r-2 border-green-500/70" style={{ transform: `scale(${imageEased})`, transformOrigin: 'bottom right' }} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
 
       {/* --- CONTACT SECTION --- */}
       <section id="contact" className="py-16 md:py-24 px-6 bg-[#050505]">

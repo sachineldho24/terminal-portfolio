@@ -15,33 +15,40 @@ const Navbar: React.FC<NavbarProps> = ({ toggleTerminal }) => {
   useEffect(() => {
     if (!isHome) return;
 
+    let ticking = false;
+
     const handleScroll = () => {
-      const sections = ['home', 'skills', 'projects', 'about', 'contact'];
-      
-      // Dynamic offset based on window height
-      const threshold = window.innerHeight / 3;
-      const scrollPosition = window.scrollY + threshold;
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        ticking = false;
+        const sections = ['home', 'skills', 'projects', 'about', 'contact'];
+        
+        // Dynamic offset based on window height
+        const threshold = window.innerHeight / 3;
+        const scrollPosition = window.scrollY + threshold;
 
-      // Special check: if scrolled to the very bottom, contact is active
-      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 50) {
-        setActiveSection('contact');
-        return;
-      }
+        // Special check: if scrolled to the very bottom, contact is active
+        if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 50) {
+          setActiveSection('contact');
+          return;
+        }
 
-      for (const section of sections) {
-        const el = document.getElementById(section);
-        if (el) {
-          const top = el.offsetTop;
-          const height = el.offsetHeight;
-          if (scrollPosition >= top && scrollPosition < top + height) {
-            setActiveSection(section);
-            break;
+        for (const section of sections) {
+          const el = document.getElementById(section);
+          if (el) {
+            const top = el.offsetTop;
+            const height = el.offsetHeight;
+            if (scrollPosition >= top && scrollPosition < top + height) {
+              setActiveSection(section);
+              break;
+            }
           }
         }
-      }
+      });
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll(); // Trigger initially
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isHome]);
