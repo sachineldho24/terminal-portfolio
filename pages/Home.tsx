@@ -249,6 +249,18 @@ const Home: React.FC = () => {
           card.style.opacity = `1`;
         }
       });
+
+      // Update crossing marquee translations on scroll
+      const ltrMarquee = document.getElementById('marquee-ltr');
+      const rtlMarquee = document.getElementById('marquee-rtl');
+      if (ltrMarquee) {
+        const offset = (window.scrollY * 0.22) % 1200;
+        ltrMarquee.style.transform = `translate3d(${offset - 300}px, 0, 0)`;
+      }
+      if (rtlMarquee) {
+        const offset = (window.scrollY * 0.22) % 1200;
+        rtlMarquee.style.transform = `translate3d(${-offset}px, 0, 0)`;
+      }
     };
 
     const onScroll = () => {
@@ -911,7 +923,26 @@ const Home: React.FC = () => {
       </div>
 
       {/* --- PROJECTS SECTION --- */}
-      <section id="projects" className="pt-16 md:pt-20 pb-20 relative bg-[#050505]" ref={projectsRef}>
+      <section id="projects" className="pt-8 md:pt-12 pb-20 relative bg-[#050505]" ref={projectsRef}>
+        
+        {/* Scroll-driven Crossing Marquees Divider */}
+        <div className="w-full overflow-hidden border-y border-green-950/20 py-8 my-16 relative bg-[#050505] select-none font-mono">
+            <div 
+                id="marquee-ltr"
+                className="whitespace-nowrap text-[clamp(24px,3.5vw,56px)] font-black text-green-500/20 uppercase tracking-widest transition-transform duration-300 ease-out"
+                style={{ willChange: 'transform' }}
+            >
+                DEPLOYED_SYSTEMS // FULL_STACK_CAPABILITY // DECISION_ENGINE // AGENTIC_ROUTING // 
+            </div>
+            <div 
+                id="marquee-rtl"
+                className="whitespace-nowrap text-[clamp(24px,3.5vw,56px)] font-black text-slate-800 uppercase tracking-widest transition-transform duration-300 ease-out mt-4"
+                style={{ willChange: 'transform' }}
+            >
+                ◄◄ PIPELINES // VECTOR_DATABASES // SYSTEM_READY // INTUITIVE_INTERFACES // 
+            </div>
+        </div>
+
         <div className="max-w-[1400px] mx-auto w-full px-6 sm:px-10 lg:px-16 font-mono">
             <div className="lg:pl-8">
             {/* Title */}
@@ -1044,14 +1075,39 @@ const Home: React.FC = () => {
 
                                 {/* Right Side: Visual Image Preview (with clip-path mask-lift reveal) */}
                                 <div className="relative aspect-[16/10] bg-black border border-green-950/30 overflow-hidden group rounded-sm shadow-inner project-image-mask">
+                                    {/* Primary Image Cover */}
                                     <img 
                                         src={project.image} 
                                         alt={project.name} 
-                                        className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-[1.03]" 
+                                        className="w-full h-full object-cover opacity-80 group-hover:opacity-20 group-hover:blur-md transition-all duration-500" 
                                         loading="lazy"
                                         decoding="async"
-                                        style={{ transition: 'opacity 500ms cubic-bezier(0.23, 1, 0.32, 1), transform 750ms cubic-bezier(0.23, 1, 0.32, 1)', willChange: 'transform, opacity' }}
+                                        style={{ transition: 'opacity 400ms ease, filter 400ms ease' }}
                                     />
+
+                                    {/* Secondary Hover Letterbox (ItsJay style polygon reveal showcasing project gallery) */}
+                                    {project.gallery && project.gallery[0] && (
+                                        <div 
+                                            className="absolute top-1/2 -translate-y-[8%] left-1/2 -translate-x-1/2 w-[75%] aspect-video rounded border border-green-500/20 overflow-hidden z-20 transition-all duration-700
+                                              [clip-path:polygon(30%_50%,70%_50%,70%_50%,30%_50%)]
+                                              group-hover:[clip-path:polygon(0_100%,100%_100%,100%_0,0_0)]
+                                              group-hover:-translate-y-1/2"
+                                            style={{ transitionTimingFunction: 'cubic-bezier(0.87, 0, 0.13, 1)' }}
+                                        >
+                                            <img 
+                                                src={project.gallery[0]} 
+                                                alt={`${project.name} secondary detail`}
+                                                className="w-full h-full object-cover scale-110 group-hover:scale-100 transition-all duration-700" 
+                                                style={{ transitionTimingFunction: 'cubic-bezier(0.23, 1, 0.32, 1)' }}
+                                            />
+                                            {/* Corner brackets overlay */}
+                                            <div className="absolute top-2 left-2 w-2 h-2 border-t border-l border-green-500/60" />
+                                            <div className="absolute top-2 right-2 w-2 h-2 border-t border-r border-green-500/60" />
+                                            <div className="absolute bottom-2 left-2 w-2 h-2 border-b border-l border-green-500/60" />
+                                            <div className="absolute bottom-2 right-2 w-2 h-2 border-b border-r border-green-500/60" />
+                                        </div>
+                                    )}
+
                                     {/* CRT scanline simulation on image */}
                                     <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.15)_50%)] bg-[length:100%_4px] pointer-events-none z-10" />
                                     
