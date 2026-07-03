@@ -9,9 +9,6 @@ import { MapPin, Mail, Send, Github, Linkedin, Twitter, Terminal, Cpu } from 'lu
 
 const Home: React.FC = () => {
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const [cardEffects, setCardEffects] = useState<{ scale: number; opacity: number; yOffset: number }[]>(
-    PROJECTS.map(() => ({ scale: 1, opacity: 1, yOffset: 0 }))
-  );
 
   const [systemReady, setSystemReady] = useState(false);
   const [currentTime, setCurrentTime] = useState('');
@@ -219,7 +216,7 @@ const Home: React.FC = () => {
     return () => window.removeEventListener('scroll', onScroll);
   }, [isDesktop, isScreenshotMode]);
 
-  // Scroll stack effect for projects cards
+  // Scroll stack effect for projects cards (mutates style directly for 60fps performance)
   useEffect(() => {
     if (isScreenshotMode) return;
 
@@ -228,7 +225,11 @@ const Home: React.FC = () => {
     const updateCardEffects = () => {
       ticking = false;
       const topThreshold = 110;
-      const effects = PROJECTS.map((_, idx) => {
+      
+      PROJECTS.forEach((_, idx) => {
+        const card = cardRefs.current[idx];
+        if (!card) return;
+
         const nextCard = cardRefs.current[idx + 1];
         if (nextCard) {
           const rectNext = nextCard.getBoundingClientRect();
@@ -237,15 +238,17 @@ const Home: React.FC = () => {
           // Calculate coverage as the next card scrolls up on top of this one
           const progress = Math.max(0, Math.min(1, (window.innerHeight - rectNext.top) / scrollRange));
           
-          return {
-            scale: 1 - progress * 0.05,
-            opacity: 1 - progress * 0.45,
-            yOffset: -progress * 15
-          };
+          const scale = 1 - progress * 0.05;
+          const opacity = 1 - progress * 0.45;
+          const yOffset = -progress * 15;
+
+          card.style.transform = `scale(${scale}) translate3d(0, ${yOffset}px, 0)`;
+          card.style.opacity = `${opacity}`;
+        } else {
+          card.style.transform = `scale(1) translate3d(0, 0, 0)`;
+          card.style.opacity = `1`;
         }
-        return { scale: 1, opacity: 1, yOffset: 0 };
       });
-      setCardEffects(effects);
     };
 
     const onScroll = () => {
@@ -259,6 +262,43 @@ const Home: React.FC = () => {
     updateCardEffects();
     return () => window.removeEventListener('scroll', onScroll);
   }, [isScreenshotMode]);
+
+  // Intersection observer for image clip-path reveals (Emil Kowalski entrance principle)
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('revealed');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
+
+    const elements = document.querySelectorAll('.project-image-mask');
+    elements.forEach(el => observer.observe(el));
+
+    return () => {
+      elements.forEach(el => observer.unobserve(el));
+    };
+  }, []);
+
+  // Magnetic button handlers (Emil Kowalski physical micro-interaction principle)
+  const handleMagneticMove = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    const btn = e.currentTarget;
+    const { left, top, width, height } = btn.getBoundingClientRect();
+    const x = e.clientX - left - width / 2;
+    const y = e.clientY - top - height / 2;
+    const dist = Math.sqrt(x * x + y * y);
+    const maxDist = Math.max(width, height) * 0.8;
+    if (dist < maxDist) {
+      btn.style.transform = `translate3d(${x * 0.35}px, ${y * 0.35}px, 0) scale(1.03)`;
+    }
+  };
+
+  const handleMagneticLeave = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    const btn = e.currentTarget;
+    btn.style.transform = 'translate3d(0, 0, 0) scale(1)';
+  };
 
   useEffect(() => {
     const updateTime = () => {
@@ -882,23 +922,58 @@ const Home: React.FC = () => {
                 <p className="text-slate-400 text-sm sm:text-base">Selected systems, applications, and source code.</p>
             </div>
 
+            {/* Custom Embedded CSS Styles for Scanline and Mask Reveals */}
+            <style>{`
+              .project-image-mask {
+                clip-path: inset(100% 0 0 0);
+                transition: clip-path 1.2s cubic-bezier(0.23, 1, 0.32, 1);
+              }
+              .project-image-mask.revealed {
+                clip-path: inset(0% 0 0 0);
+              }
+              
+              @keyframes crt-scan-sweep {
+                0% { transform: translateY(-100%); }
+                100% { transform: translateY(330%); }
+              }
+              
+              .card-scanline {
+                position: absolute;
+                inset: 0;
+                background: linear-gradient(
+                  to bottom,
+                  transparent 0%,
+                  rgba(34, 197, 94, 0.03) 10%,
+                  rgba(34, 197, 94, 0.08) 50%,
+                  rgba(34, 197, 94, 0.03) 90%,
+                  transparent 100%
+                );
+                height: 30%;
+                width: 100%;
+                pointer-events: none;
+                z-index: 5;
+                animation: crt-scan-sweep 8s linear infinite;
+              }
+            `}</style>
+
             {/* Sticky Stack Card Deck */}
             <div className="space-y-16 mt-12 relative pb-10">
                 {PROJECTS.map((project, idx) => {
-                    const effect = cardEffects[idx] || { scale: 1, opacity: 1, yOffset: 0 };
                     return (
                         <div 
                             key={project.id}
                             ref={el => cardRefs.current[idx] = el}
-                            className="sticky bg-[#0a0a0a]/95 border border-green-500/20 rounded-lg shadow-[0_0_50px_rgba(34,197,94,0.02)] overflow-hidden transition-all duration-300 origin-top"
+                            className="sticky bg-[#0a0a0a]/95 border border-green-500/20 rounded-lg shadow-[0_0_50px_rgba(34,197,94,0.02)] overflow-hidden origin-top"
                             style={{
                                 top: `${110 + idx * 24}px`, // Stack offset so header tabs remain visible!
-                                transform: `scale(${effect.scale}) translate3d(0, ${effect.yOffset}px, 0)`,
-                                opacity: effect.opacity,
                                 minHeight: '440px',
+                                transition: 'transform 0.3s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.3s cubic-bezier(0.23, 1, 0.32, 1)',
                                 willChange: 'transform, opacity',
                             }}
                         >
+                            {/* Cathode-ray beam scanning line overlay */}
+                            <div className="card-scanline" />
+
                             {/* Card Header tab */}
                             <div className="bg-[#121212] px-4 py-2 flex justify-between items-center border-b border-green-950/40 text-xs font-bold text-slate-400">
                                 <div className="flex items-center gap-2">
@@ -936,15 +1011,17 @@ const Home: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    {/* Action Links */}
+                                    {/* Action Links with Magnetic Pull */}
                                     <div className="flex flex-wrap gap-4 pt-4">
                                         {project.demoLink && (
                                             <a 
                                                 href={project.demoLink} 
                                                 target="_blank" 
                                                 rel="noreferrer" 
-                                                className="px-4 py-2.5 bg-green-500 text-black font-bold tracking-wider text-xs flex items-center gap-1.5 hover:bg-green-400 active:scale-[0.97] rounded-sm transition-all"
-                                                style={{ transition: 'background-color 200ms cubic-bezier(0.23, 1, 0.32, 1), transform 150ms cubic-bezier(0.23, 1, 0.32, 1)' }}
+                                                onMouseMove={handleMagneticMove}
+                                                onMouseLeave={handleMagneticLeave}
+                                                className="px-4 py-2.5 bg-green-500 text-black font-bold tracking-wider text-xs flex items-center gap-1.5 active:scale-[0.97] rounded-sm"
+                                                style={{ transition: 'transform 0.4s cubic-bezier(0.23, 1, 0.32, 1), background-color 200ms ease' }}
                                             >
                                                 <span>$</span> RUN_LIVE_DEMO
                                             </a>
@@ -954,8 +1031,10 @@ const Home: React.FC = () => {
                                                 href={project.repoLink} 
                                                 target="_blank" 
                                                 rel="noreferrer" 
-                                                className="px-4 py-2.5 border border-green-500/30 text-green-400 font-bold tracking-wider text-xs flex items-center gap-1.5 hover:bg-green-500/10 active:scale-[0.97] rounded-sm transition-all"
-                                                style={{ transition: 'background-color 200ms cubic-bezier(0.23, 1, 0.32, 1), border-color 200ms cubic-bezier(0.23, 1, 0.32, 1), color 200ms cubic-bezier(0.23, 1, 0.32, 1), transform 150ms cubic-bezier(0.23, 1, 0.32, 1)' }}
+                                                onMouseMove={handleMagneticMove}
+                                                onMouseLeave={handleMagneticLeave}
+                                                className="px-4 py-2.5 border border-green-500/30 text-green-400 font-bold tracking-wider text-xs flex items-center gap-1.5 active:scale-[0.97] rounded-sm"
+                                                style={{ transition: 'transform 0.4s cubic-bezier(0.23, 1, 0.32, 1), border-color 200ms ease, color 200ms ease' }}
                                             >
                                                 <span>$</span> VIEW_SOURCE
                                             </a>
@@ -963,12 +1042,12 @@ const Home: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Right Side: Visual Image Preview */}
-                                <div className="relative aspect-[16/10] bg-black border border-green-950/30 overflow-hidden group rounded-sm shadow-inner">
+                                {/* Right Side: Visual Image Preview (with clip-path mask-lift reveal) */}
+                                <div className="relative aspect-[16/10] bg-black border border-green-950/30 overflow-hidden group rounded-sm shadow-inner project-image-mask">
                                     <img 
                                         src={project.image} 
                                         alt={project.name} 
-                                        className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-[1.03] transition-all duration-700" 
+                                        className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-[1.03]" 
                                         loading="lazy"
                                         decoding="async"
                                         style={{ transition: 'opacity 500ms cubic-bezier(0.23, 1, 0.32, 1), transform 750ms cubic-bezier(0.23, 1, 0.32, 1)', willChange: 'transform, opacity' }}
