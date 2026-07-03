@@ -32,6 +32,26 @@ const TerminalCLI: React.FC<TerminalCLIProps> = ({ isOpen, onClose }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
+  // Entry / Exit transition states
+  const [shouldRender, setShouldRender] = useState(isOpen);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setShouldRender(true);
+      const animTimer = requestAnimationFrame(() => {
+        setIsTransitioning(true);
+      });
+      return () => cancelAnimationFrame(animTimer);
+    } else {
+      setIsTransitioning(false);
+      const timer = setTimeout(() => {
+        setShouldRender(false);
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
   // Initialize position to center on open
   useEffect(() => {
     if (isOpen) {
@@ -40,7 +60,8 @@ const TerminalCLI: React.FC<TerminalCLIProps> = ({ isOpen, onClose }) => {
       setPosition({ x: initialX, y: initialY });
       
       // Auto-focus input
-      setTimeout(() => inputRef.current?.focus(), 100);
+      const timer = setTimeout(() => inputRef.current?.focus(), 150);
+      return () => clearTimeout(timer);
     }
   }, [isOpen]);
 
@@ -263,14 +284,17 @@ const TerminalCLI: React.FC<TerminalCLIProps> = ({ isOpen, onClose }) => {
     }
   };
 
-  if (!isOpen) return null;
+  if (!shouldRender) return null;
 
   return (
     <div 
-        className="fixed w-[90vw] md:w-[600px] h-[60vh] md:h-[400px] z-50 flex flex-col shadow-2xl rounded-sm overflow-hidden font-mono text-sm border border-slate-700 bg-black/95 backdrop-blur-md animate-in zoom-in-95 fade-in duration-200"
+        className={`fixed w-[90vw] md:w-[600px] h-[60vh] md:h-[400px] z-50 flex flex-col shadow-2xl rounded-sm overflow-hidden font-mono text-sm border border-slate-700 bg-black/95 backdrop-blur-md transition-all duration-200 ease-out
+          ${isTransitioning ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}
+        `}
         style={{ 
             top: position.y, 
-            left: position.x 
+            left: position.x,
+            willChange: 'transform, opacity'
         }}
     >
         {/* Matrix Effect Overlay */}
@@ -292,13 +316,13 @@ const TerminalCLI: React.FC<TerminalCLIProps> = ({ isOpen, onClose }) => {
           <span className="text-xs font-bold tracking-wider">user@portfolio:~</span>
         </div>
         <div className="flex items-center gap-1" onMouseDown={(e) => e.stopPropagation()}>
-          <button onClick={onClose} className="p-1 hover:bg-slate-800 rounded group">
+          <button onClick={onClose} className="p-1 hover:bg-slate-800 rounded group active:scale-[0.90] transition-transform">
             <Minus className="w-3 h-3 text-slate-500 group-hover:text-white" />
           </button>
-          <button className="p-1 hover:bg-slate-800 rounded group">
+          <button className="p-1 hover:bg-slate-800 rounded group active:scale-[0.90] transition-transform">
              <Square className="w-3 h-3 text-slate-500 group-hover:text-white" />
           </button>
-          <button onClick={onClose} className="p-1 hover:bg-red-900/50 rounded group">
+          <button onClick={onClose} className="p-1 hover:bg-red-900/50 rounded group active:scale-[0.90] transition-transform">
             <X className="w-3 h-3 text-slate-500 group-hover:text-red-400" />
           </button>
         </div>

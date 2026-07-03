@@ -25,3 +25,6 @@ dist-ssr
 
 .vercel
 test_server_front.png
+
+# Agent skills
+.agents/

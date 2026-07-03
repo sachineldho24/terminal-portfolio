@@ -3,11 +3,16 @@ import { PROJECTS, SOCIAL_LINKS, CONTACT_EMAIL } from '../constants';
 import TypingText from '../components/TypingText';
 import ProjectListItem from '../components/ProjectListItem';
 import PointillismHero from '../components/PointillismHero';
+import Preloader from '../components/Preloader';
 import { Project } from '../types';
 import { MapPin, Mail, Send, Github, Linkedin, Twitter, Terminal, Cpu } from 'lucide-react';
 
 const Home: React.FC = () => {
-  const [hoveredProject, setHoveredProject] = useState<Project | null>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [cardEffects, setCardEffects] = useState<{ scale: number; opacity: number; yOffset: number }[]>(
+    PROJECTS.map(() => ({ scale: 1, opacity: 1, yOffset: 0 }))
+  );
+
   const [systemReady, setSystemReady] = useState(false);
   const [currentTime, setCurrentTime] = useState('');
 
@@ -214,27 +219,46 @@ const Home: React.FC = () => {
     return () => window.removeEventListener('scroll', onScroll);
   }, [isDesktop, isScreenshotMode]);
 
-  // Mouse tracking for the hover card
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-
+  // Scroll stack effect for projects cards
   useEffect(() => {
-    let ticking = false;
-    let last = { x: 0, y: 0 };
+    if (isScreenshotMode) return;
 
-    const handleMouseMove = (e: MouseEvent) => {
-      last = { x: e.clientX, y: e.clientY };
+    let ticking = false;
+
+    const updateCardEffects = () => {
+      ticking = false;
+      const topThreshold = 110;
+      const effects = PROJECTS.map((_, idx) => {
+        const nextCard = cardRefs.current[idx + 1];
+        if (nextCard) {
+          const rectNext = nextCard.getBoundingClientRect();
+          const scrollRange = window.innerHeight - topThreshold;
+          
+          // Calculate coverage as the next card scrolls up on top of this one
+          const progress = Math.max(0, Math.min(1, (window.innerHeight - rectNext.top) / scrollRange));
+          
+          return {
+            scale: 1 - progress * 0.05,
+            opacity: 1 - progress * 0.45,
+            yOffset: -progress * 15
+          };
+        }
+        return { scale: 1, opacity: 1, yOffset: 0 };
+      });
+      setCardEffects(effects);
+    };
+
+    const onScroll = () => {
       if (!ticking) {
         ticking = true;
-        requestAnimationFrame(() => {
-          setMousePos(last);
-          ticking = false;
-        });
+        requestAnimationFrame(updateCardEffects);
       }
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    updateCardEffects();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [isScreenshotMode]);
 
   useEffect(() => {
     const updateTime = () => {
@@ -247,6 +271,39 @@ const Home: React.FC = () => {
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // 3D Tilt state & handlers for skills cards
+  const [tiltStyles, setTiltStyles] = useState<{ [key: number]: string }>({});
+
+  const handleTiltMove = (index: number, e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDesktop) return;
+    const card = e.currentTarget;
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    const xc = rect.width / 2;
+    const yc = rect.height / 2;
+    
+    const dx = x - xc;
+    const dy = y - yc;
+    
+    // Rotate max ±10 degrees
+    const rx = -(dy / yc) * 10;
+    const ry = (dx / xc) * 10;
+    
+    setTiltStyles(prev => ({
+      ...prev,
+      [index]: `rotateX(${rx}deg) rotateY(${ry}deg) scale3d(1.02, 1.02, 1.02)`
+    }));
+  };
+
+  const handleTiltLeave = (index: number) => {
+    setTiltStyles(prev => ({
+      ...prev,
+      [index]: 'rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)'
+    }));
+  };
 
   // ── Hacker text decryption system ──
   // Glitch charset for the scramble effect
@@ -393,9 +450,11 @@ const Home: React.FC = () => {
       top: 'calc(50% - 125px)', // center coordinate relative to 520px container
       width: '360px',
       height: '250px',
-      transform: `translate3d(${currentX}px, ${currentY}px, ${zOffset}px) rotateZ(${currentAngle}deg)`,
-      // Smooth out transitions when scrolling
-      transition: 'transform 0.8s cubic-bezier(0.1, 0.8, 0.2, 1), border-color 0.3s ease, box-shadow 0.3s ease',
+      transform: `translate3d(${currentX}px, ${currentY}px, ${zOffset}px) rotateZ(${currentAngle}deg) ${p > 0.85 && tiltStyles[index] ? tiltStyles[index] : ''}`,
+      // Smooth out transitions when scrolling, but speed up for responsive hover tilt when assembled
+      transition: p > 0.85 
+        ? 'transform 0.3s cubic-bezier(0.23, 1, 0.32, 1), border-color 0.3s ease, box-shadow 0.3s ease'
+        : 'transform 0.8s cubic-bezier(0.1, 0.8, 0.2, 1), border-color 0.3s ease, box-shadow 0.3s ease',
       zIndex: p > 0.35 + index * 0.08 ? 20 + index : 10 - index,
       transformStyle: 'preserve-3d' as const,
       boxShadow: p > 0.35 
@@ -406,6 +465,7 @@ const Home: React.FC = () => {
 
   return (
     <div className="min-h-screen font-mono bg-[#050505] text-slate-300">
+      <Preloader />
 
       {/* --- HERO SECTION WITH POINTILLISM PORTRAIT --- */}
       {/* This tall wrapper provides the scroll distance that drives the animation */}
@@ -557,6 +617,8 @@ const Home: React.FC = () => {
                       {/* 1. FRONTEND */}
                       <div 
                           style={getCardStyle(0)}
+                          onMouseMove={(e) => handleTiltMove(0, e)}
+                          onMouseLeave={() => handleTiltLeave(0)}
                           className="border border-green-500/20 bg-[#070707] rounded-lg p-5 pb-4 hover:border-green-500/40 transition-all duration-300 overflow-hidden flex flex-col"
                       >
                           <h3 className="text-green-500 text-sm md:text-base font-bold uppercase tracking-wider mb-2 flex items-center gap-2 flex-shrink-0">
@@ -591,6 +653,8 @@ const Home: React.FC = () => {
                       {/* 2. BACKEND */}
                       <div 
                           style={getCardStyle(1)}
+                          onMouseMove={(e) => handleTiltMove(1, e)}
+                          onMouseLeave={() => handleTiltLeave(1)}
                           className="border border-green-500/20 bg-[#070707] rounded-lg p-5 pb-4 hover:border-green-500/40 transition-all duration-300 overflow-hidden flex flex-col"
                       >
                           <h3 className="text-green-500 text-sm md:text-base font-bold uppercase tracking-wider mb-2 flex items-center gap-2 flex-shrink-0">
@@ -620,6 +684,8 @@ const Home: React.FC = () => {
                       {/* 3. AI/ML */}
                       <div 
                           style={getCardStyle(2)}
+                          onMouseMove={(e) => handleTiltMove(2, e)}
+                          onMouseLeave={() => handleTiltLeave(2)}
                           className="border border-green-500/20 bg-[#070707] rounded-lg p-5 pb-4 hover:border-green-500/40 transition-all duration-300 overflow-hidden flex flex-col"
                       >
                           <h3 className="text-green-500 text-sm md:text-base font-bold uppercase tracking-wider mb-2 flex items-center gap-2 flex-shrink-0">
@@ -656,6 +722,8 @@ const Home: React.FC = () => {
                       {/* 4. DEV TOOLS & PLATFORMS */}
                       <div 
                           style={getCardStyle(3)}
+                          onMouseMove={(e) => handleTiltMove(3, e)}
+                          onMouseLeave={() => handleTiltLeave(3)}
                           className="border border-green-500/20 bg-[#070707] rounded-lg p-5 pb-4 hover:border-green-500/40 transition-all duration-300 overflow-hidden flex flex-col"
                       >
                           <h3 className="text-green-500 text-sm md:text-base font-bold uppercase tracking-wider mb-2 flex items-center gap-2 flex-shrink-0">
@@ -700,6 +768,8 @@ const Home: React.FC = () => {
                       {/* 5. DATABASES & VECTOR DB */}
                       <div 
                           style={getCardStyle(4)}
+                          onMouseMove={(e) => handleTiltMove(4, e)}
+                          onMouseLeave={() => handleTiltLeave(4)}
                           className="border border-green-500/20 bg-[#070707] rounded-lg p-5 pb-3 hover:border-green-500/40 transition-all duration-300 overflow-hidden flex flex-col"
                       >
                           <h3 className="text-green-500 text-sm md:text-base font-bold uppercase tracking-wider mb-2 flex items-center gap-2 flex-shrink-0">
@@ -744,6 +814,8 @@ const Home: React.FC = () => {
                       {/* 6. CONCEPTS & STRENGTHS */}
                       <div 
                           style={getCardStyle(5)}
+                          onMouseMove={(e) => handleTiltMove(5, e)}
+                          onMouseLeave={() => handleTiltLeave(5)}
                           className="border border-green-500/20 bg-[#070707] rounded-lg p-5 pb-3 hover:border-green-500/40 transition-all duration-300 overflow-hidden flex flex-col"
                       >
                           <h3 className="text-green-500 text-sm md:text-base font-bold uppercase tracking-wider mb-2 flex items-center gap-2 flex-shrink-0">
@@ -799,7 +871,7 @@ const Home: React.FC = () => {
       </div>
 
       {/* --- PROJECTS SECTION --- */}
-      <section id="projects" className="pt-16 md:pt-20 pb-10 md:pb-14 relative bg-[#050505]" ref={projectsRef}>
+      <section id="projects" className="pt-16 md:pt-20 pb-20 relative bg-[#050505]" ref={projectsRef}>
         <div className="max-w-[1400px] mx-auto w-full px-6 sm:px-10 lg:px-16 font-mono">
             <div className="lg:pl-8">
             {/* Title */}
@@ -810,72 +882,109 @@ const Home: React.FC = () => {
                 <p className="text-slate-400 text-sm sm:text-base">Selected systems, applications, and source code.</p>
             </div>
 
-            <div className="relative">
-                {/* File List */}
-                <div className="space-y-1">
-                    {PROJECTS.map((project) => (
-                        <ProjectListItem 
-                            key={project.id} 
-                            project={project} 
-                            onHover={setHoveredProject} 
-                            isHovered={hoveredProject?.id === project.id}
-                        />
-                    ))}
-                    <div className="py-2 px-2 text-slate-600 animate-pulse">_</div>
-                </div>
-
-                {/* Hover Card (Terminal Popup Style - Reference Image 2) */}
-                {hoveredProject && (
-                     <div 
-                        className="pointer-events-none fixed z-50 hidden lg:block"
-                        style={{
-                            left: mousePos.x + 40,
-                            top: mousePos.y - 40,
-                        }}
-                     >
-                        <div className="w-[550px] bg-[#0c0c0c]/95 border border-slate-600/50 backdrop-blur-sm shadow-2xl rounded-sm overflow-hidden text-sm">
-                            
-                            {/* Header */}
-                            <div className="bg-[#1a1a1a] px-4 py-2 flex items-center gap-2 border-b border-slate-700/50">
-                                <span className="text-green-500 text-xs">{'>'}</span>
-                                <span className="text-slate-200 font-bold tracking-wide uppercase">
-                                    {hoveredProject.name} <span className="text-slate-500">|</span> DESCRIPTION
-                                </span>
+            {/* Sticky Stack Card Deck */}
+            <div className="space-y-16 mt-12 relative pb-10">
+                {PROJECTS.map((project, idx) => {
+                    const effect = cardEffects[idx] || { scale: 1, opacity: 1, yOffset: 0 };
+                    return (
+                        <div 
+                            key={project.id}
+                            ref={el => cardRefs.current[idx] = el}
+                            className="sticky bg-[#0a0a0a]/95 border border-green-500/20 rounded-lg shadow-[0_0_50px_rgba(34,197,94,0.02)] overflow-hidden transition-all duration-300 origin-top"
+                            style={{
+                                top: `${110 + idx * 24}px`, // Stack offset so header tabs remain visible!
+                                transform: `scale(${effect.scale}) translate3d(0, ${effect.yOffset}px, 0)`,
+                                opacity: effect.opacity,
+                                minHeight: '440px',
+                                willChange: 'transform, opacity',
+                            }}
+                        >
+                            {/* Card Header tab */}
+                            <div className="bg-[#121212] px-4 py-2 flex justify-between items-center border-b border-green-950/40 text-xs font-bold text-slate-400">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-green-500">{'>'}</span>
+                                    <span>SYSTEM_LOG: {project.name}</span>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <span className="text-green-500/80">SIZE: {project.size}KB</span>
+                                    <span className={`px-1.5 py-0.5 rounded-sm ${project.status === 'DEPLOYED' ? 'bg-green-500/10 text-green-400' : 'bg-yellow-500/10 text-yellow-400'}`}>
+                                        {project.status}
+                                    </span>
+                                </div>
                             </div>
 
-                            {/* Content */}
-                            <div className="p-6 relative overflow-hidden">
-                                {/* Liquid/Wave background effect inside popup */}
-                                <div className="absolute inset-0 bg-green-900/5 opacity-50">
-                                    <div className="absolute inset-0 bg-gradient-to-br from-transparent via-green-500/5 to-transparent blur-xl transform rotate-12 scale-150"></div>
+                            {/* Card Content Grid */}
+                            <div className="p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center min-h-[380px]">
+                                {/* Left Side: Details */}
+                                <div className="space-y-4 flex flex-col justify-between h-full">
+                                    <div className="space-y-4">
+                                        <h3 className="text-xl sm:text-2xl font-bold text-white tracking-wide uppercase">
+                                            {project.name} <span className="text-green-500/60 font-normal text-xs ml-2">[{project.date}]</span>
+                                        </h3>
+                                        
+                                        <div className="border border-green-500/10 rounded bg-[#030303] p-4 font-mono text-xs sm:text-sm text-green-500/90 max-h-[160px] overflow-y-auto leading-relaxed shadow-[inset_0_0_12px_rgba(0,255,0,0.01)]">
+                                            <div className="text-green-400 font-bold mb-1 select-none">// DESCRIPTION_LOG:</div>
+                                            {project.fullDescription}
+                                        </div>
+
+                                        <div className="flex flex-wrap gap-2 text-[10px] sm:text-xs">
+                                            {project.technologies.map((tech, i) => (
+                                                <span key={i} className="text-green-500/80 bg-green-500/5 px-2 py-0.5 border border-green-500/10 rounded-sm">
+                                                    {tech}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Action Links */}
+                                    <div className="flex flex-wrap gap-4 pt-4">
+                                        {project.demoLink && (
+                                            <a 
+                                                href={project.demoLink} 
+                                                target="_blank" 
+                                                rel="noreferrer" 
+                                                className="px-4 py-2.5 bg-green-500 text-black font-bold tracking-wider text-xs flex items-center gap-1.5 hover:bg-green-400 active:scale-[0.97] rounded-sm transition-all"
+                                                style={{ transition: 'background-color 200ms cubic-bezier(0.23, 1, 0.32, 1), transform 150ms cubic-bezier(0.23, 1, 0.32, 1)' }}
+                                            >
+                                                <span>$</span> RUN_LIVE_DEMO
+                                            </a>
+                                        )}
+                                        {project.repoLink && (
+                                            <a 
+                                                href={project.repoLink} 
+                                                target="_blank" 
+                                                rel="noreferrer" 
+                                                className="px-4 py-2.5 border border-green-500/30 text-green-400 font-bold tracking-wider text-xs flex items-center gap-1.5 hover:bg-green-500/10 active:scale-[0.97] rounded-sm transition-all"
+                                                style={{ transition: 'background-color 200ms cubic-bezier(0.23, 1, 0.32, 1), border-color 200ms cubic-bezier(0.23, 1, 0.32, 1), color 200ms cubic-bezier(0.23, 1, 0.32, 1), transform 150ms cubic-bezier(0.23, 1, 0.32, 1)' }}
+                                            >
+                                                <span>$</span> VIEW_SOURCE
+                                            </a>
+                                        )}
+                                    </div>
                                 </div>
 
-                                <div className="relative z-10 space-y-4 font-mono">
-                                    <div>
-                                        <div className="flex items-baseline gap-2 text-green-400 mb-1">
-                                            <span>{'>'}</span>
-                                            <span className="font-bold">Context:</span>
-                                        </div>
-                                        <p className="text-slate-300 pl-5 leading-relaxed">
-                                            {hoveredProject.shortDescription}
-                                        </p>
-                                    </div>
+                                {/* Right Side: Visual Image Preview */}
+                                <div className="relative aspect-[16/10] bg-black border border-green-950/30 overflow-hidden group rounded-sm shadow-inner">
+                                    <img 
+                                        src={project.image} 
+                                        alt={project.name} 
+                                        className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-[1.03] transition-all duration-700" 
+                                        loading="lazy"
+                                        decoding="async"
+                                        style={{ transition: 'opacity 500ms cubic-bezier(0.23, 1, 0.32, 1), transform 750ms cubic-bezier(0.23, 1, 0.32, 1)', willChange: 'transform, opacity' }}
+                                    />
+                                    {/* CRT scanline simulation on image */}
+                                    <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.15)_50%)] bg-[length:100%_4px] pointer-events-none z-10" />
                                     
-                                    <div className="pl-5 space-y-2 text-slate-400 text-xs">
-                                        <div>
-                                            <span className="text-green-500 font-bold mr-2">Tech:</span>
-                                            {hoveredProject.technologies.join(', ')}.
-                                        </div>
-                                        <div>
-                                            <span className="text-green-500 font-bold mr-2">Status:</span>
-                                            <span className="text-slate-200 uppercase">{hoveredProject.status}</span>.
-                                        </div>
+                                    {/* Decorative HUD lines */}
+                                    <div className="absolute top-2 left-2 text-[8px] bg-black/80 text-green-500/80 px-1 font-bold z-20">
+                                        PREVIEW_01 // RESOLVED
                                     </div>
                                 </div>
                             </div>
                         </div>
-                     </div>
-                )}
+                    );
+                })}
             </div>
             </div>
         </div>

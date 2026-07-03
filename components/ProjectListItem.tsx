@@ -13,9 +13,12 @@ const ProjectListItem: React.FC<ProjectListItemProps> = ({ project, onHover, isH
 
   return (
     <div 
-      className={`relative flex items-center gap-4 py-3 px-4 cursor-pointer transition-all duration-200 font-mono text-sm md:text-base border-l-2 group
+      className={`relative flex items-center gap-4 py-3 px-4 cursor-pointer font-mono text-sm md:text-base border-l-2 group active:scale-[0.99]
         ${isHovered ? 'bg-white/[0.03] border-green-500 text-green-400' : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/[0.015]'}
       `}
+      style={{
+        transition: 'background-color 250ms cubic-bezier(0.23, 1, 0.32, 1), border-color 250ms cubic-bezier(0.23, 1, 0.32, 1), color 250ms cubic-bezier(0.23, 1, 0.32, 1), transform 150ms cubic-bezier(0.23, 1, 0.32, 1)'
+      }}
       onMouseEnter={() => onHover(project)}
       onMouseLeave={() => onHover(null)}
       onClick={() => navigate(`/project/${project.id}`)}
@@ -26,7 +29,10 @@ const ProjectListItem: React.FC<ProjectListItemProps> = ({ project, onHover, isH
       </span>
 
       {/* Project Name */}
-      <span className={`font-bold tracking-wide ${isHovered ? 'text-white' : 'text-slate-300'} transition-colors duration-200`}>
+      <span 
+        className={`font-bold tracking-wide ${isHovered ? 'text-white' : 'text-slate-300'}`}
+        style={{ transition: 'color 200ms cubic-bezier(0.23, 1, 0.32, 1)' }}
+      >
         {project.name}
       </span>
 
@@ -37,12 +43,22 @@ const ProjectListItem: React.FC<ProjectListItemProps> = ({ project, onHover, isH
       <span className="flex-1" />
 
       {/* Date — subtle */}
-      <span className={`hidden sm:inline text-xs tracking-wider ${isHovered ? 'text-slate-500' : 'text-slate-700'} transition-colors duration-200`}>
+      <span 
+        className={`hidden sm:inline text-xs tracking-wider ${isHovered ? 'text-slate-500' : 'text-slate-700'}`}
+        style={{ transition: 'color 200ms cubic-bezier(0.23, 1, 0.32, 1)' }}
+      >
         {project.date}
       </span>
 
       {/* Arrow */}
-      <span className={`text-sm ${isHovered ? 'text-green-500 translate-x-1' : 'text-slate-800'} transition-all duration-300`}>{'→'}</span>
+      <span 
+        className={`text-sm ${isHovered ? 'text-green-500 translate-x-1' : 'text-slate-850'}`}
+        style={{
+          transition: 'transform 300ms cubic-bezier(0.23, 1, 0.32, 1), color 300ms cubic-bezier(0.23, 1, 0.32, 1)'
+        }}
+      >
+        {'→'}
+      </span>
     </div>
   );
 };

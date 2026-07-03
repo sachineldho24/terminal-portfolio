@@ -58,12 +58,28 @@ const ProjectDetail: React.FC = () => {
         {/* Actions */}
         <div className="flex flex-wrap gap-4 mb-16">
             {project.demoLink && (
-                <a href={project.demoLink} target="_blank" rel="noreferrer" className="px-6 py-3 bg-white/5 border border-white/20 text-white font-bold tracking-wider text-sm flex items-center gap-2 hover:bg-white hover:text-black active:scale-[0.97] transition-all rounded-sm">
+                <a 
+                  href={project.demoLink} 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="px-6 py-3 bg-white/5 border border-white/20 text-white font-bold tracking-wider text-sm flex items-center gap-2 hover:bg-white hover:text-black active:scale-[0.97] rounded-sm"
+                  style={{
+                    transition: 'background-color 250ms cubic-bezier(0.23, 1, 0.32, 1), border-color 250ms cubic-bezier(0.23, 1, 0.32, 1), color 250ms cubic-bezier(0.23, 1, 0.32, 1), transform 150ms cubic-bezier(0.23, 1, 0.32, 1)'
+                  }}
+                >
                     <span className="text-green-500 group-hover:text-black">$</span> RUN_LIVE_DEMO
                 </a>
             )}
             {project.repoLink && (
-                <a href={project.repoLink} target="_blank" rel="noreferrer" className="px-6 py-3 border border-transparent text-slate-400 hover:text-white font-bold tracking-wider text-sm flex items-center gap-2 active:scale-[0.97] transition-all">
+                <a 
+                  href={project.repoLink} 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="px-6 py-3 border border-transparent text-slate-400 hover:text-white font-bold tracking-wider text-sm flex items-center gap-2 active:scale-[0.97]"
+                  style={{
+                    transition: 'color 250ms cubic-bezier(0.23, 1, 0.32, 1), transform 150ms cubic-bezier(0.23, 1, 0.32, 1)'
+                  }}
+                >
                     <span className="text-slate-600">$</span> VIEW_SOURCE_CODE
                 </a>
             )}
@@ -92,7 +108,11 @@ const ProjectDetail: React.FC = () => {
                             <img 
                                 src={img} 
                                 alt={`Visual Data ${i}`} 
-                                className="w-full h-auto object-cover opacity-80 group-hover:opacity-100 transition-all duration-500"
+                                className="w-full h-auto object-cover opacity-80 group-hover:opacity-100 group-hover:scale-[1.03]"
+                                style={{
+                                  transition: 'opacity 500ms cubic-bezier(0.23, 1, 0.32, 1), transform 750ms cubic-bezier(0.23, 1, 0.32, 1)',
+                                  willChange: 'transform, opacity'
+                                }}
                                 loading="lazy"
                                 decoding="async"
                             />

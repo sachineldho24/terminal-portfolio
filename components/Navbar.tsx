@@ -61,8 +61,40 @@ const Navbar: React.FC<NavbarProps> = ({ toggleTerminal }) => {
     }
   };
 
-  const navClass = (isActive: boolean) => 
-    `text-sm tracking-wider uppercase hover:text-green-400 transition-colors ${isActive ? 'text-green-500 font-bold border-b border-green-500' : 'text-slate-400'}`;
+  const renderNavLink = (id: string, label: string) => {
+    const isActive = activeSection === id;
+    return (
+      <button 
+        onClick={() => scrollToSection(id)} 
+        className={`text-xs tracking-widest uppercase font-mono flex items-center active:scale-[0.95] py-1
+          ${isActive ? 'text-green-400 font-bold' : 'text-slate-400 hover:text-slate-200'}`}
+        style={{
+          transition: 'color 200ms cubic-bezier(0.23, 1, 0.32, 1), transform 150ms cubic-bezier(0.23, 1, 0.32, 1)'
+        }}
+      >
+        <span className={`text-green-500 font-bold transition-all duration-300 ease-out overflow-hidden flex items-center
+          ${isActive ? 'max-w-[12px] opacity-100 mr-1.5' : 'max-w-0 opacity-0 mr-0'}`}
+        >
+          {'>'}
+        </span>
+        <span>{label}</span>
+      </button>
+    );
+  };
+
+  const renderNavLinkExternal = (to: string, label: string) => {
+    return (
+      <NavLink 
+        to={to} 
+        className="text-xs tracking-widest uppercase font-mono flex items-center active:scale-[0.95] py-1 text-slate-400 hover:text-slate-200"
+        style={{
+          transition: 'color 200ms cubic-bezier(0.23, 1, 0.32, 1), transform 150ms cubic-bezier(0.23, 1, 0.32, 1)'
+        }}
+      >
+        <span>{label}</span>
+      </NavLink>
+    );
+  };
 
   return (
     <nav className="fixed top-0 left-0 w-full z-40 bg-slate-950/80 backdrop-blur-sm border-b border-green-900/30">
@@ -81,16 +113,16 @@ const Navbar: React.FC<NavbarProps> = ({ toggleTerminal }) => {
             <div className="hidden md:flex gap-8">
                 {isHome ? (
                     <>
-                    <button onClick={() => scrollToSection('home')} className={navClass(activeSection === 'home')}>Home</button>
-                    <button onClick={() => scrollToSection('skills')} className={navClass(activeSection === 'skills')}>Skills</button>
-                    <button onClick={() => scrollToSection('projects')} className={navClass(activeSection === 'projects')}>Projects</button>
-                    <button onClick={() => scrollToSection('about')} className={navClass(activeSection === 'about')}>About</button>
-                    <button onClick={() => scrollToSection('contact')} className={navClass(activeSection === 'contact')}>Contact</button>
+                    {renderNavLink('home', 'Home')}
+                    {renderNavLink('skills', 'Skills')}
+                    {renderNavLink('projects', 'Projects')}
+                    {renderNavLink('about', 'About')}
+                    {renderNavLink('contact', 'Contact')}
                     </>
                 ) : (
                     <>
-                    <NavLink to="/" className={navClass(false)}>Home</NavLink>
-                    <NavLink to="/" className={navClass(false)}>Return_Root</NavLink>
+                    {renderNavLinkExternal('/', 'Home')}
+                    {renderNavLinkExternal('/', 'Return_Root')}
                     </>
                 )}
             </div>
@@ -98,7 +130,10 @@ const Navbar: React.FC<NavbarProps> = ({ toggleTerminal }) => {
             {/* Terminal Toggle Button */}
             <button 
                 onClick={toggleTerminal}
-                className="flex items-center gap-2 px-3 py-1 bg-green-500/10 border border-green-500/30 rounded-sm text-green-400 text-xs hover:bg-green-500 hover:text-black active:scale-[0.97] transition-all group"
+                className="flex items-center gap-2 px-3 py-1 bg-green-500/10 border border-green-500/30 rounded-sm text-green-400 text-xs hover:bg-green-500 hover:text-black active:scale-[0.97] group"
+                style={{
+                  transition: 'background-color 200ms cubic-bezier(0.23, 1, 0.32, 1), border-color 200ms cubic-bezier(0.23, 1, 0.32, 1), color 200ms cubic-bezier(0.23, 1, 0.32, 1), transform 150ms cubic-bezier(0.23, 1, 0.32, 1)'
+                }}
                 title="Open Terminal (Ctrl+`)"
             >
                 <Command className="w-3 h-3" />
